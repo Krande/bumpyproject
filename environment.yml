@@ -2,14 +2,7 @@ name: bumpyproject
 channels:
   - conda-forge
 dependencies:
-  - python=3.11
-  - azure-identity
-  - python-dotenv
-  - semver
-  - tomlkit
+  - pytest
   - pip
   - pip:
-      - azure-mgmt-containerregistry
-      - docker
-      - azure-containerregistry
-      - GitPython
+      - .

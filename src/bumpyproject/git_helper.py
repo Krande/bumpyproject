@@ -4,12 +4,22 @@ from bumpyproject import env_vars as env
 from bumpyproject.versions import BumpLevel
 
 
+class DirtyRepoError(Exception):
+    pass
+
+
 class GitHelper:
     @staticmethod
     def check_git_state():
         curr_repo = git.Repo(env.ROOT_DIR)
         if curr_repo.is_dirty():
-            raise Exception("There are uncommitted changes!")
+            raise DirtyRepoError("There are uncommitted changes!")
+
+    @staticmethod
+    def get_latest_tag() -> str:
+        curr_repo = git.Repo(env.ROOT_DIR)
+        tags = list(curr_repo.tags)
+        return tags[-1].name
 
     @staticmethod
     def commit_and_tag(old_version, new_version):

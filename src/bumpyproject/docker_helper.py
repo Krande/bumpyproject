@@ -1,3 +1,4 @@
+import pathlib
 import subprocess
 
 import docker
@@ -5,10 +6,38 @@ from azure.containerregistry import ContainerRegistryClient
 from azure.identity import ClientSecretCredential
 
 from bumpyproject import env_vars as env
+from bumpyproject.bumper import BumpHelper
+from bumpyproject.project import Project
 
 
 class DockerHelper:
     colors = {"black": 30, "red": 31, "green": 32, "yellow": 33, "blue": 34, "magenta": 35, "cyan": 36, "white": 37}
+
+    @staticmethod
+    def bump_docker_image(context_dir, dockerfile_name, repository, build, push, use_native_client):
+        if env.ACR_NAME is None:
+            raise ValueError("ACR_NAME environment variable is not set")
+
+        if repository is None:
+            raise ValueError("repository argument is not set")
+
+        if isinstance(context_dir, str):
+            context_dir = pathlib.Path(context_dir).resolve().absolute()
+
+        latest_tag = DockerHelper.get_latest_tagged_image(repository)
+        pyproject_version = Project.get_pyproject_version()
+        if not BumpHelper.is_newer(latest_tag, pyproject_version):
+            raise ValueError(f"New version {pyproject_version} is not newer than {latest_tag}")
+
+        # Build the Docker image
+        tagged_name = f"{env.ACR_NAME}.azurecr.io/{repository}:{pyproject_version}"
+
+        if build or push:
+            DockerHelper.build(context_dir, dockerfile_name, tagged_name)
+
+        # Push the Docker image to Azure Container Registry
+        if push:
+            DockerHelper.push(repo=f"{tagged_name}", use_native_client=use_native_client)
 
     @staticmethod
     def colorize_text(color, text):
