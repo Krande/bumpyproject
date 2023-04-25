@@ -1,3 +1,7 @@
+
+bump:
+	conda run -n bumpyproject --live-stream bumpy --bump-level pre-release --ignore-git-state
+
 dev:
 	mamba update -f environment.yml
 

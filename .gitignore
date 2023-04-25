@@ -1,2 +1,5 @@
 .idea/
 .ruff_cache/
+**.pytest_cache/
+build/
+**.egg-info/
