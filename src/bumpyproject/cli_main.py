@@ -23,6 +23,9 @@ def main():
     parser.add_argument(
         "--check-conda", action="store_true", help="Checks if the new version is higher than the latest conda version."
     )
+    parser.add_argument(
+        "--check-acr", action="store_true", help="Checks if the new version is higher than the latest acr version."
+    )
 
     args = parser.parse_args()
     Project.bump_project(args.bump_level, args.ignore_git_state, args.ci_git_bump, args.check_pypi, args.check_conda)

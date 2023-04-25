@@ -14,7 +14,7 @@ class DockerHelper:
     colors = {"black": 30, "red": 31, "green": 32, "yellow": 33, "blue": 34, "magenta": 35, "cyan": 36, "white": 37}
 
     @staticmethod
-    def bump_docker_image(context_dir, dockerfile_name, repository, build, push, use_native_client):
+    def bump_acr_docker_image(context_dir, dockerfile_name, repository, build, push, use_native_client):
         if env.ACR_NAME is None:
             raise ValueError("ACR_NAME environment variable is not set")
 
@@ -37,7 +37,7 @@ class DockerHelper:
 
         # Push the Docker image to Azure Container Registry
         if push:
-            DockerHelper.push(repo=f"{tagged_name}", use_native_client=use_native_client)
+            DockerHelper.push(repo=tagged_name, use_native_client=use_native_client)
 
     @staticmethod
     def colorize_text(color, text):
@@ -105,10 +105,13 @@ class DockerHelper:
         print("Docker image push complete.")
 
     @staticmethod
-    def get_latest_tagged_image(repository):
+    def get_latest_tagged_image():
+        if env.ACR_REPO_NAME is None:
+            raise ValueError("ACR_REPO_NAME environment variable is not set")
+
         # Get the service principal credentials
         credential = ClientSecretCredential(
-            tenant_id=env.TENANT_ID, client_id=env.ACR_CLIENT_ID, client_secret=env.ACR_CLIENT_SECRET
+            tenant_id=env.AZ_TENANT_ID, client_id=env.ACR_CLIENT_ID, client_secret=env.ACR_CLIENT_SECRET
         )
 
         # Create a ContainerRegistryClient object
@@ -119,7 +122,7 @@ class DockerHelper:
         )
 
         # Get the list of tags for repository
-        tags = list(acr_client.list_tag_properties(repository=repository))
+        tags = list(acr_client.list_tag_properties(repository=env.ACR_REPO_NAME))
         latest_tag = tags[-1].name
-        print(f"The latest tagged image of {repository} is: {latest_tag}")
+        print(f"The latest tagged image of {env.ACR_REPO_NAME} is: {latest_tag}")
         return latest_tag

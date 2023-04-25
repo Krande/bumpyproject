@@ -2,6 +2,7 @@ import json
 
 import semver
 import tomlkit
+from bumpyproject.docker_helper import DockerHelper
 
 from bumpyproject import env_vars as env
 from bumpyproject.bumper import BumpHelper
@@ -11,7 +12,7 @@ from bumpyproject.py_distro import CondaHelper, PypiHelper
 
 class Project:
     @staticmethod
-    def bump_project(bump_level, ignore_git_state, ci_git_bump, check_pypi, check_conda):
+    def bump_project(bump_level, ignore_git_state, ci_git_bump, check_pypi, check_conda, check_acr):
         if ci_git_bump:
             bump_level = GitHelper.get_bump_level_from_commit()
 
@@ -21,27 +22,32 @@ class Project:
         if check_pypi:
             pypi_version = PypiHelper.get_latest_pypi_version()
             if not BumpHelper.is_newer(current_version, pypi_version):
-                raise ValueError(f"New version {new_version} < {pypi_version}")
+                raise ValueError(f"New version {new_version=} < {pypi_version=}")
 
         if check_conda:
             conda_version = CondaHelper.get_latest_conda_version()
             if not BumpHelper.is_newer(current_version, conda_version):
-                raise ValueError(f"New version {new_version} < {conda_version}")
+                raise ValueError(f"New version {new_version=} < {conda_version=}")
+
+        if check_acr:
+            acr_version = DockerHelper.get_latest_tagged_image()
+            if not BumpHelper.is_newer(current_version, acr_version):
+                raise ValueError(f"New version {new_version=} < {acr_version=}")
 
         # Before the image is pushed we do some checks
         if not ignore_git_state:
             GitHelper.check_git_state()
 
         # If exists bump package.json file
-        is_jsbumped = True
+        is_pkg_json_bumped = True
         if env.PKG_JSON.exists():
-            is_jsbumped = Project.bump_package_json(new_version)
+            is_pkg_json_bumped = Project.bump_package_json(new_version)
 
         # Bump pyproject.toml file
-        is_pybumped = Project.bump_pyproject(new_version)
+        is_pyproject_bumped = Project.bump_pyproject(new_version)
 
         # Commit and tag the new version
-        if not ignore_git_state and (is_pybumped and is_jsbumped):
+        if not ignore_git_state and (is_pyproject_bumped and is_pkg_json_bumped):
             GitHelper.commit_and_tag(current_version, new_version)
 
     @staticmethod

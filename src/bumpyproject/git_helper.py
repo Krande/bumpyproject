@@ -25,8 +25,8 @@ class GitHelper:
     def commit_and_tag(old_version, new_version):
         commit_message = f"bump {old_version} --> {new_version}"
         curr_repo = git.Repo(env.ROOT_DIR)
-        curr_repo.git.config("user.email", env.GITHUB_USER_EMAIL)
-        curr_repo.git.config("user.name", env.GITHUB_USER)
+        curr_repo.git.config("user.email", env.GIT_USER_EMAIL)
+        curr_repo.git.config("user.name", env.GIT_USER)
         curr_repo.git.execute(["git", "commit", "-am", commit_message])
         curr_repo.git.execute(["git", "tag", "-a", new_version, "-m", commit_message])
 
