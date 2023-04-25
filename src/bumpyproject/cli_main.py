@@ -7,7 +7,7 @@ def main():
     parser = argparse.ArgumentParser(description="Bump version")
     parser.add_argument(
         "--bump-level",
-        choices=["major", "minor", "patch", "pre-release"],
+        choices=["major", "minor", "patch", "pre-release", "pre"],
         help="Bump level (major, minor, patch or pre-release)",
         default="pre-release",
     )
@@ -28,7 +28,8 @@ def main():
     )
 
     args = parser.parse_args()
-    Project.bump_project(args.bump_level, args.ignore_git_state, args.ci_git_bump, args.check_pypi, args.check_conda)
+    Project.bump_project(args.bump_level, args.ignore_git_state, args.ci_git_bump, args.check_pypi, args.check_conda,
+                         args.check_acr)
 
 
 if __name__ == "__main__":

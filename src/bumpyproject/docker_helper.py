@@ -14,23 +14,23 @@ class DockerHelper:
     colors = {"black": 30, "red": 31, "green": 32, "yellow": 33, "blue": 34, "magenta": 35, "cyan": 36, "white": 37}
 
     @staticmethod
-    def bump_acr_docker_image(context_dir, dockerfile_name, repository, build, push, use_native_client):
+    def bump_acr_docker_image(context_dir, dockerfile_name, build, push, use_native_client):
         if env.ACR_NAME is None:
             raise ValueError("ACR_NAME environment variable is not set")
 
-        if repository is None:
+        if env.ACR_REPO_NAME is None:
             raise ValueError("repository argument is not set")
 
         if isinstance(context_dir, str):
             context_dir = pathlib.Path(context_dir).resolve().absolute()
 
-        latest_tag = DockerHelper.get_latest_tagged_image(repository)
         pyproject_version = Project.get_pyproject_version()
-        if not BumpHelper.is_newer(latest_tag, pyproject_version):
-            raise ValueError(f"New version {pyproject_version} is not newer than {latest_tag}")
+        current_docker_image_version = DockerHelper.get_latest_tagged_image()
+        if not BumpHelper.is_newer(current_docker_image_version, pyproject_version):
+            raise ValueError(f"New version {pyproject_version} is not newer than {current_docker_image_version}")
 
         # Build the Docker image
-        tagged_name = f"{env.ACR_NAME}.azurecr.io/{repository}:{pyproject_version}"
+        tagged_name = f"{env.ACR_NAME}.azurecr.io/{env.ACR_REPO_NAME}:{pyproject_version}"
 
         if build or push:
             DockerHelper.build(context_dir, dockerfile_name, tagged_name)

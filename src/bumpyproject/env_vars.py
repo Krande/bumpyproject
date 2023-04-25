@@ -15,8 +15,8 @@ PKG_JSON = pathlib.Path(os.getenv("PKG_JSON", "package.json"))
 ONLY_VALID_REPOS = os.getenv("VALID_REPOS", "").split(";")
 
 # Git related env variables
-GIT_USER_EMAIL = os.getenv("GITHUB_USER_EMAIL", "bumpybot@bumpyproject.com")
-GIT_USER = os.getenv("GITHUB_USER", "bumpybot")
+GIT_USER_EMAIL = os.getenv("GIT_USER_EMAIL", "bumpybot@bumpyproject.com")
+GIT_USER = os.getenv("GIT_USER", "bumpybot")
 GIT_LOCAL_TEMP_DIR = os.getenv("GIT_LOCAL_TEMP_DIR", "temp")
 if isinstance(GIT_LOCAL_TEMP_DIR, str):
     GIT_LOCAL_TEMP_DIR = pathlib.Path(GIT_LOCAL_TEMP_DIR)
