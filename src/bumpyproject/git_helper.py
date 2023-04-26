@@ -31,6 +31,12 @@ class GitHelper:
         curr_repo.git.execute(["git", "tag", "-a", new_version, "-m", commit_message])
 
     @staticmethod
+    def push():
+        curr_repo = git.Repo(env.ROOT_DIR)
+        curr_repo.git.push()
+        curr_repo.git.push("--tags")
+
+    @staticmethod
     def get_bump_level_from_commit() -> BumpLevel:
         curr_repo = git.Repo(env.ROOT_DIR)
         commits = list(curr_repo.iter_commits(max_count=1))

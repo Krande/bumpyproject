@@ -2,17 +2,18 @@ import json
 
 import semver
 import tomlkit
-from bumpyproject.docker_helper import DockerHelper
 
 from bumpyproject import env_vars as env
-from bumpyproject.bumper import BumpHelper
-from bumpyproject.git_helper import GitHelper
-from bumpyproject.py_distro import CondaHelper, PypiHelper
 
 
 class Project:
     @staticmethod
-    def bump_project(bump_level, ignore_git_state, ci_git_bump, check_pypi, check_conda, check_acr):
+    def bump_project(bump_level, ignore_git_state, ci_git_bump, check_pypi, check_conda, check_acr, git_push):
+        from bumpyproject.git_helper import GitHelper
+        from bumpyproject.py_distro import CondaHelper, PypiHelper
+        from bumpyproject.bumper import BumpHelper
+        from bumpyproject.docker_helper import DockerHelper
+
         if ci_git_bump:
             bump_level = GitHelper.get_bump_level_from_commit()
 
@@ -49,6 +50,10 @@ class Project:
         # Commit and tag the new version
         if not ignore_git_state and (is_pyproject_bumped and is_pkg_json_bumped):
             GitHelper.commit_and_tag(current_version, new_version)
+
+        # Push the new version to git
+        if not ignore_git_state and git_push:
+            GitHelper.push()
 
     @staticmethod
     def get_pyproject_version() -> str:

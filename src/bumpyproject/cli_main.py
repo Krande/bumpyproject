@@ -17,6 +17,7 @@ def main():
         action="store_true",
         help="Bump level based on git commit message.",
     )
+    parser.add_argument("--push", action="store_true", help="Pushes changes to git.")
     parser.add_argument(
         "--check-pypi", action="store_true", help="Checks if the new version is higher than the latest pypi version."
     )
@@ -29,7 +30,7 @@ def main():
 
     args = parser.parse_args()
     Project.bump_project(args.bump_level, args.ignore_git_state, args.ci_git_bump, args.check_pypi, args.check_conda,
-                         args.check_acr)
+                         args.check_acr, args.push)
 
 
 if __name__ == "__main__":

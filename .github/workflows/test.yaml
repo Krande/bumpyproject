@@ -1,0 +1,26 @@
+name: bumpy-test
+
+# Bump 0
+on: push
+
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: mamba-org/provision-with-micromamba@main # https://github.com/mamba-org/provision-with-micromamba
+        with:
+          cache-env: true
+          channels: conda-forge
+          channel-priority: strict
+          environment-file: environment.yml
+
+      - name: Bump pyproject
+        run: |
+          pytest .
+        working-directory: tests
