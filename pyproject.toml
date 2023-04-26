@@ -15,6 +15,7 @@ dependencies = [
     "azure-containerregistry",
     "docker",
     "GitPython",
+    "python-dotenv",
 ]
 
 [tool.setuptools.packages.find]
