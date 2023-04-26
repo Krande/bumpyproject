@@ -77,7 +77,7 @@ class Project:
         if env.RELEASE_TAG in old_version:
             old_version = old_version.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
 
-        compare = semver.compare(old_version, new_version)
+        compare = semver.Version.compare(old_version, new_version)
         if compare == 1:
             raise ValueError(f"New version {new_version} is less than old version {old_version}")
         elif compare == 0:
