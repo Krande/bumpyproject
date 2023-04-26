@@ -19,7 +19,8 @@ def mock_proj_a():
 
         # Initialize a new Git repository in the temporary directory
         repo = git.Repo.init(temp_dir)
-
+        repo.git.config("user.email", env.GIT_USER_EMAIL)
+        repo.git.config("user.name", env.GIT_USER)
         # Perform any Git-related operations here, e.g., adding and committing files
         repo.git.add('.')
         repo.git.commit('-m', 'Initial commit')
