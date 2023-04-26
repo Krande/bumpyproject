@@ -20,7 +20,7 @@ jobs:
           channel-priority: strict
           environment-file: environment.yml
 
-      - name: Bump pyproject
+      - name: Test
         run: |
           pytest .
         working-directory: tests
