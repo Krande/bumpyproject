@@ -23,10 +23,6 @@ class BumpHelper:
         if isinstance(bump_level, str):
             bump_level = BumpLevel.from_string(bump_level)
 
-        # Have to replace 'next' with 'alpha' because PEP doesn't support 'next'
-        if "next" in current_version:
-            current_version = current_version.replace("next", "alpha")
-
         ver = semver.VersionInfo.parse(current_version)
         if bump_level == BumpLevel.MAJOR:
             ver = ver.bump_major()

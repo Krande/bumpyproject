@@ -1,5 +1,5 @@
 import git
-
+import tomlkit
 from bumpyproject import env_vars as env
 from bumpyproject.versions import BumpLevel
 
@@ -9,6 +9,27 @@ class DirtyRepoError(Exception):
 
 
 class GitHelper:
+    @staticmethod
+    def get_pyproject_toml_version_from_latest_pushed_commit():
+        # Initialize the repo object
+        repo = git.Repo(env.ROOT_DIR)
+
+        # Get the latest and previous commits
+        latest_commit = repo.head.commit
+
+        # Get the pyproject.toml file from both commits
+        try:
+            latest_file = latest_commit.tree / env.PYPROJECT_TOML
+        except KeyError:
+            print("Error: 'pyproject.toml' not found in the latest or previous commit.")
+            return
+
+        # Read the contents of the files
+        toml_data = tomlkit.parse(latest_file.data_stream.read().decode('utf-8'))
+
+        # Get the version from the file
+        return toml_data["project"]["version"]
+
     @staticmethod
     def check_git_state():
         curr_repo = git.Repo(env.ROOT_DIR)
