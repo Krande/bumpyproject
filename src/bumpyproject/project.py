@@ -4,6 +4,7 @@ import semver
 import tomlkit
 
 from bumpyproject import env_vars as env
+from bumpyproject.log_utils import logger
 
 
 class Project:
@@ -64,7 +65,7 @@ class Project:
 
         old_version = toml_data["project"]["version"]
         git_old_version = GitHelper.get_pyproject_toml_version_from_latest_pushed_commit()
-        if old_version != git_old_version:
+        if git_old_version is not None and old_version != git_old_version:
             old_sv, git_old_sv = semver.Version.parse(old_version), semver.Version.parse(git_old_version)
             logger.warning(f"Latest git commit version {old_version=} != {git_old_version=} from git")
         # Convert back the pre-release tag from PEP 440 compliant to semver compliant

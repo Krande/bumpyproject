@@ -14,8 +14,23 @@ class GitHelper:
         # Initialize the repo object
         repo = git.Repo(env.ROOT_DIR)
 
+        # check if there is a remote
+        remotes = list(repo.remotes)
+        if len(remotes) == 0:
+            return None
+        elif len(remotes) > 1:
+            raise ValueError("Currently only one git remote is supported.")
+
+        remote = remotes[0]
+
+        # If there are no pushed commits return None
+        if len(remote.refs) == 0:
+            return None
+
         # Get the latest and previous commits
         latest_commit = repo.head.commit
+        # Get the last pushed commit
+        all_commits = list(repo.iter_commits("origin/HEAD"))
 
         # Get the pyproject.toml file from both commits
         try:
@@ -25,7 +40,7 @@ class GitHelper:
             return
 
         # Read the contents of the files
-        toml_data = tomlkit.parse(latest_file.data_stream.read().decode('utf-8'))
+        toml_data = tomlkit.parse(latest_file.data_stream.read().decode("utf-8"))
 
         # Get the version from the file
         return toml_data["project"]["version"]
