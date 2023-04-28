@@ -20,7 +20,7 @@ def main():
         action="store_true",
         help="Bump level based on git commit message.",
     )
-    parser.add_argument("--push", action="store_true", help="Pushes changes to git.")
+    parser.add_argument("--git-push", action="store_true", help="Pushes changes to git.")
     parser.add_argument(
         "--check-pypi", action="store_true", help="Checks if the new version is higher than the latest pypi version."
     )
@@ -58,8 +58,8 @@ def main():
     if args.git_root:
         env.GIT_ROOT = pathlib.Path(args.git_root)
 
-    if args.push:
-        env.GIT_PUSH = args.push
+    if args.git_push:
+        env.GIT_PUSH = args.git_push
 
     Project.bump_project(args.bump_level)
 

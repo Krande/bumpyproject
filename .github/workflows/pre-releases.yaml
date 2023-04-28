@@ -1,13 +1,17 @@
 name: bumpy-pre-release
 
 # Bump 0
-on: push
-
+on:
+ workflow_run:
+   workflows: ["bumpy-test"]
+   types: [completed] #requested
 
 jobs:
   bump:
     name: Bump - ${{ matrix.images.name }}
-    if: contains(github.event.head_commit.message, '[pre]') ||
+    if: |
+      contains(github.event.head_commit.message, '[pre]') ||
+      ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,6 +25,6 @@ jobs:
       - name: Install bumpyproject
         run: pip install .
 
-      - name: Build and push
+      - name: Bump and commit
         run: |
-          bumpy --bump-level=pre-release --check-acr --push
+          bumpy --bump-level=pre-release
