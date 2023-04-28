@@ -56,7 +56,7 @@ def main():
         env.CHECK_GIT = args.check_git
 
     if args.git_root:
-        env.GIT_ROOT = pathlib.Path(args.git_root)
+        env.GIT_ROOT = pathlib.Path(args.git_root).resolve().absolute()
 
     if args.git_push:
         env.GIT_PUSH = args.git_push

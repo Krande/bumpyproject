@@ -27,4 +27,4 @@ jobs:
 
       - name: Bump and commit
         run: |
-          bumpy --bump-level=pre-release --git-push
+          bumpy --bump-level=pre-release --git-push --git-root=${{ github.workspace }}
