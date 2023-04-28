@@ -1,6 +1,6 @@
 [project]
 name = "bumpyproject"
-version = "0.0.2alpha.3"
+version = "0.0.2alpha.4"
 description = "A simple utility for bumping version numbers in Python projects."
 authors = [
   { name = "Kristoffer H. Andersen", email = "kristoffer_andersen@outlook.com" }
