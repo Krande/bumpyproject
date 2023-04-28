@@ -27,4 +27,4 @@ jobs:
 
       - name: Bump and commit
         run: |
-          bumpy --bump-level=pre-release
+          bumpy --bump-level=pre-release --git-push
