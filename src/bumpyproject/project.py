@@ -9,35 +9,42 @@ from bumpyproject.log_utils import logger
 
 class Project:
     @staticmethod
-    def bump_project(bump_level, ignore_git_state, ci_git_bump, check_pypi, check_conda, check_acr, git_push):
+    def bump_project(bump_level):
         from bumpyproject.git_helper import GitHelper
         from bumpyproject.py_distro import CondaHelper, PypiHelper
         from bumpyproject.bumper import BumpHelper
         from bumpyproject.docker_helper import DockerHelper
 
-        if ci_git_bump:
+        if env.CI_GIT_BUMP:
             bump_level = GitHelper.get_bump_level_from_commit()
 
         current_version = Project.get_pyproject_version()
+
+        if env.CHECK_GIT:
+            git_old_version = GitHelper.get_pyproject_toml_version_from_latest_pushed_commit()
+            if git_old_version is not None and current_version != git_old_version:
+                old_sv, git_old_sv = semver.Version.parse(current_version), semver.Version.parse(git_old_version)
+                logger.warning(f"Latest git commit version {current_version=} != {git_old_version=} from git")
+
         new_version = BumpHelper.bump_version(current_version, bump_level)
 
-        if check_pypi:
+        if env.CHECK_PYPI:
             pypi_version = PypiHelper.get_latest_pypi_version()
             if not BumpHelper.is_newer(current_version, pypi_version):
                 raise ValueError(f"New version {new_version=} < {pypi_version=}")
 
-        if check_conda:
+        if env.CHECK_CONDA:
             conda_version = CondaHelper.get_latest_conda_version()
             if not BumpHelper.is_newer(current_version, conda_version):
                 raise ValueError(f"New version {new_version=} < {conda_version=}")
 
-        if check_acr:
+        if env.CHECK_ACR:
             acr_version = DockerHelper.get_latest_tagged_image()
             if not BumpHelper.is_newer(current_version, acr_version):
                 raise ValueError(f"New version {new_version=} < {acr_version=}")
 
         # Before the image is pushed we do some checks
-        if not ignore_git_state:
+        if not env.IGNORE_GIT_STATE:
             GitHelper.check_git_state()
 
         # If exists bump package.json file
@@ -49,25 +56,20 @@ class Project:
         is_pyproject_bumped = Project.bump_pyproject(new_version)
 
         # Commit and tag the new version
-        if not ignore_git_state and (is_pyproject_bumped and is_pkg_json_bumped):
+        if not env.IGNORE_GIT_STATE and (is_pyproject_bumped and is_pkg_json_bumped):
             GitHelper.commit_and_tag(current_version, new_version)
 
         # Push the new version to git
-        if not ignore_git_state and git_push:
+        if not env.IGNORE_GIT_STATE and env.GIT_PUSH:
             GitHelper.push()
 
     @staticmethod
     def get_pyproject_version() -> str:
-        from bumpyproject.git_helper import GitHelper
-
         with open(env.PYPROJECT_TOML, mode="r") as fp:
             toml_data = tomlkit.load(fp)
 
         old_version = toml_data["project"]["version"]
-        git_old_version = GitHelper.get_pyproject_toml_version_from_latest_pushed_commit()
-        if git_old_version is not None and old_version != git_old_version:
-            old_sv, git_old_sv = semver.Version.parse(old_version), semver.Version.parse(git_old_version)
-            logger.warning(f"Latest git commit version {old_version=} != {git_old_version=} from git")
+
         # Convert back the pre-release tag from PEP 440 compliant to semver compliant
         if env.RELEASE_TAG in old_version:
             old_version = old_version.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)

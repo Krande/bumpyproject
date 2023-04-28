@@ -6,11 +6,29 @@ from dotenv import load_dotenv
 load_dotenv()
 
 RELEASE_TAG = os.environ.get("RELEASE_TAG", "alpha")
-ROOT_DIR = os.getenv("GIT_ROOT_DIR", pathlib.Path(__file__).parent.parent.parent)
-if isinstance(ROOT_DIR, str):
-    ROOT_DIR = pathlib.Path(ROOT_DIR)
+GIT_ROOT_DIR = os.getenv("GIT_ROOT_DIR", pathlib.Path(__file__).parent.parent.parent)
+if isinstance(GIT_ROOT_DIR, str):
+    GIT_ROOT_DIR = pathlib.Path(GIT_ROOT_DIR)
 
+# CLI arguments (that also have env variables)
+IGNORE_GIT_STATE = os.getenv("IGNORE_GIT_STATE", False)
+CI_GIT_BUMP = os.getenv("CI_GIT_BUMP", False)
+CHECK_PYPI = os.getenv("CHECK_PYPI", False)
+CHECK_CONDA = os.getenv("CHECK_CONDA", False)
+CHECK_ACR = os.getenv("CHECK_ACR", False)
+CHECK_GIT = os.getenv("CHECK_GIT", False)
+GIT_PUSH = os.getenv("GIT_PUSH", False)
+
+# Core env variables
 PYPROJECT_TOML = os.getenv("PYPROJECT_TOML", "pyproject.toml")
+if isinstance(PYPROJECT_TOML, str):
+    PYPROJECT_TOML = pathlib.Path(PYPROJECT_TOML)
+
+if not PYPROJECT_TOML.exists() and GIT_ROOT_DIR:
+    pyproject_alt_pos = GIT_ROOT_DIR / PYPROJECT_TOML
+    if pyproject_alt_pos.exists():
+        PYPROJECT_TOML = pyproject_alt_pos
+
 PKG_JSON = pathlib.Path(os.getenv("PKG_JSON", "package.json"))
 ONLY_VALID_REPOS = os.getenv("VALID_REPOS", "").split(";")
 

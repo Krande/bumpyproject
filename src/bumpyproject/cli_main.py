@@ -1,6 +1,8 @@
 import argparse
+import pathlib
 
 from bumpyproject.project import Project
+from bumpyproject import env_vars as env
 
 
 def main():
@@ -11,6 +13,7 @@ def main():
         help="Bump level (major, minor, patch or pre-release)",
         default="pre-release",
     )
+    parser.add_argument("--git-root", help="Path to git root directory", default=".")
     parser.add_argument("--ignore-git-state", action="store_true", help="Ignores checking for unstaged git commit.")
     parser.add_argument(
         "--ci-git-bump",
@@ -27,10 +30,38 @@ def main():
     parser.add_argument(
         "--check-acr", action="store_true", help="Checks if the new version is higher than the latest acr version."
     )
+    parser.add_argument(
+        "--check-git",
+        action="store_true",
+        help="Checks if the new version is 1 increment higher than the latest pushed git tag.",
+    )
 
     args = parser.parse_args()
-    Project.bump_project(args.bump_level, args.ignore_git_state, args.ci_git_bump, args.check_pypi, args.check_conda,
-                         args.check_acr, args.push)
+    if args.ignore_git_state:
+        env.IGNORE_GIT_STATE = args.ignore_git_state
+
+    if args.ci_git_bump:
+        env.CI_GIT_BUMP = args.ci_git_bump
+
+    if args.check_pypi:
+        env.CHECK_PYPI = args.check_pypi
+
+    if args.check_conda:
+        env.CHECK_CONDA = args.check_conda
+
+    if args.check_acr:
+        env.CHECK_ACR = args.check_acr
+
+    if args.check_git:
+        env.CHECK_GIT = args.check_git
+
+    if args.git_root:
+        env.GIT_ROOT = pathlib.Path(args.git_root)
+
+    if args.push:
+        env.GIT_PUSH = args.push
+
+    Project.bump_project(args.bump_level)
 
 
 if __name__ == "__main__":

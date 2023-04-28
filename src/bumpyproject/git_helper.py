@@ -12,7 +12,7 @@ class GitHelper:
     @staticmethod
     def get_pyproject_toml_version_from_latest_pushed_commit():
         # Initialize the repo object
-        repo = git.Repo(env.ROOT_DIR)
+        repo = git.Repo(env.GIT_ROOT_DIR)
 
         # check if there is a remote
         remotes = list(repo.remotes)
@@ -30,7 +30,7 @@ class GitHelper:
         # Get the latest and previous commits
         latest_commit = repo.head.commit
         # Get the last pushed commit
-        all_commits = list(repo.iter_commits("origin/HEAD"))
+        all_commits = list(repo.iter_commits())
 
         # Get the pyproject.toml file from both commits
         try:
@@ -47,20 +47,20 @@ class GitHelper:
 
     @staticmethod
     def check_git_state():
-        curr_repo = git.Repo(env.ROOT_DIR)
+        curr_repo = git.Repo(env.GIT_ROOT_DIR)
         if curr_repo.is_dirty():
             raise DirtyRepoError("There are uncommitted changes!")
 
     @staticmethod
     def get_latest_tag() -> str:
-        curr_repo = git.Repo(env.ROOT_DIR)
+        curr_repo = git.Repo(env.GIT_ROOT_DIR)
         tags = list(curr_repo.tags)
         return tags[-1].name
 
     @staticmethod
     def commit_and_tag(old_version, new_version):
         commit_message = f"bump {old_version} --> {new_version}"
-        curr_repo = git.Repo(env.ROOT_DIR)
+        curr_repo = git.Repo(env.GIT_ROOT_DIR)
         curr_repo.git.config("user.email", env.GIT_USER_EMAIL)
         curr_repo.git.config("user.name", env.GIT_USER)
         curr_repo.git.execute(["git", "commit", "-am", commit_message])
@@ -68,13 +68,13 @@ class GitHelper:
 
     @staticmethod
     def push():
-        curr_repo = git.Repo(env.ROOT_DIR)
+        curr_repo = git.Repo(env.GIT_ROOT_DIR)
         curr_repo.git.push()
         curr_repo.git.push("--tags")
 
     @staticmethod
     def get_bump_level_from_commit() -> BumpLevel:
-        curr_repo = git.Repo(env.ROOT_DIR)
+        curr_repo = git.Repo(env.GIT_ROOT_DIR)
         commits = list(curr_repo.iter_commits(max_count=1))
         latest_commit = commits[0]
         msg = latest_commit.message
