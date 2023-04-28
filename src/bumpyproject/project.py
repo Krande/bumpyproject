@@ -21,11 +21,12 @@ class Project:
 
         current_version = Project.get_pyproject_version()
 
-        if env.CHECK_GIT:
-            git_old_version = GitHelper.get_pyproject_toml_version_from_latest_pushed_commit()
-            if git_old_version is not None and current_version != git_old_version:
-                old_sv, git_old_sv = semver.Version.parse(current_version), semver.Version.parse(git_old_version)
-                logger.warning(f"Latest git commit version {current_version=} != {git_old_version=} from git")
+        git_old_version = GitHelper.get_pyproject_toml_version_from_latest_pushed_commit()
+        if git_old_version is not None and current_version != git_old_version:
+            old_sv, git_old_sv = semver.Version.parse(current_version), semver.Version.parse(git_old_version)
+            logger.warning(f"Latest git commit version {current_version=} != {git_old_version=} from git")
+            res = old_sv - git_old_sv
+            print('sd')
 
         new_version = BumpHelper.bump_version(current_version, bump_level)
 
@@ -65,15 +66,20 @@ class Project:
             GitHelper.push()
 
     @staticmethod
+    def make_py_ver_semver(pyver: str) -> str:
+        # Convert back the pre-release tag from PEP 440 compliant to semver compliant
+        if env.RELEASE_TAG in pyver:
+            pyver = pyver.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
+
+        return pyver
+
+    @staticmethod
     def get_pyproject_version() -> str:
         with open(Project.pyproject_toml_path(), mode="r") as fp:
             toml_data = tomlkit.load(fp)
 
         old_version = toml_data["project"]["version"]
-
-        # Convert back the pre-release tag from PEP 440 compliant to semver compliant
-        if env.RELEASE_TAG in old_version:
-            old_version = old_version.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
+        old_version = Project.make_py_ver_semver(old_version)
 
         return old_version
 
