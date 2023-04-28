@@ -1,0 +1,26 @@
+name: bumpy-pre-release
+
+# Bump 0
+on: push
+
+
+jobs:
+  bump:
+    name: Bump - ${{ matrix.images.name }}
+    if: contains(github.event.head_commit.message, '[pre]') ||
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install bumpyproject
+        run: pip install .
+
+      - name: Build and push
+        run: |
+          bumpy --bump-level=pre-release --check-acr --push
