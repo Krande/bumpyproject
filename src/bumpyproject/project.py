@@ -1,4 +1,5 @@
 import json
+import pathlib
 
 import semver
 import tomlkit
@@ -65,7 +66,7 @@ class Project:
 
     @staticmethod
     def get_pyproject_version() -> str:
-        with open(env.PYPROJECT_TOML, mode="r") as fp:
+        with open(Project.pyproject_toml_path(), mode="r") as fp:
             toml_data = tomlkit.load(fp)
 
         old_version = toml_data["project"]["version"]
@@ -78,7 +79,7 @@ class Project:
 
     @staticmethod
     def bump_pyproject(new_version) -> bool:
-        with open(env.PYPROJECT_TOML, mode="r") as fp:
+        with open(Project.pyproject_toml_path(), mode="r") as fp:
             toml_data = tomlkit.load(fp)
 
         old_version = toml_data["project"]["version"]
@@ -97,7 +98,7 @@ class Project:
             new_version = new_version.replace("-", "")
 
         toml_data["project"]["version"] = new_version
-        with open(env.PYPROJECT_TOML, "w") as f:
+        with open(Project.pyproject_toml_path(), "w") as f:
             f.write(tomlkit.dumps(toml_data))
 
         return True
@@ -120,3 +121,18 @@ class Project:
             json.dump(data, f, indent=2)
 
         return True
+
+    @staticmethod
+    def pyproject_toml_path() -> pathlib.Path:
+        pyproject_toml = env.PYPROJECT_TOML
+
+        if isinstance(pyproject_toml, str):
+            pyproject_toml = pathlib.Path(env.PYPROJECT_TOML).resolve()
+
+        if not pyproject_toml.exists():
+            pyproject_toml = env.GIT_ROOT_DIR / env.PYPROJECT_TOML
+
+        if not pyproject_toml.exists():
+            raise FileNotFoundError(f"Could not find {env.PYPROJECT_TOML}")
+
+        return pyproject_toml

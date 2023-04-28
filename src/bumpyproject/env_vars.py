@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 RELEASE_TAG = os.environ.get("RELEASE_TAG", "alpha")
-GIT_ROOT_DIR = os.getenv("GIT_ROOT_DIR", pathlib.Path(__file__).parent.parent.parent)
+GIT_ROOT_DIR = os.getenv("GIT_ROOT_DIR", ".")
 if isinstance(GIT_ROOT_DIR, str):
     GIT_ROOT_DIR = pathlib.Path(GIT_ROOT_DIR)
 
@@ -21,14 +21,6 @@ GIT_PUSH = os.getenv("GIT_PUSH", False)
 
 # Core env variables
 PYPROJECT_TOML = os.getenv("PYPROJECT_TOML", "pyproject.toml")
-if isinstance(PYPROJECT_TOML, str):
-    PYPROJECT_TOML = pathlib.Path(PYPROJECT_TOML)
-
-if not PYPROJECT_TOML.exists() and GIT_ROOT_DIR:
-    pyproject_alt_pos = GIT_ROOT_DIR / PYPROJECT_TOML
-    if pyproject_alt_pos.exists():
-        PYPROJECT_TOML = pyproject_alt_pos
-
 PKG_JSON = pathlib.Path(os.getenv("PKG_JSON", "package.json"))
 ONLY_VALID_REPOS = os.getenv("VALID_REPOS", "").split(";")
 

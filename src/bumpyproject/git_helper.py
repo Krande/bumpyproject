@@ -1,6 +1,7 @@
 import git
 import tomlkit
 from bumpyproject import env_vars as env
+from bumpyproject.project import Project
 from bumpyproject.versions import BumpLevel
 
 
@@ -34,7 +35,7 @@ class GitHelper:
 
         # Get the pyproject.toml file from both commits
         try:
-            latest_file = latest_commit.tree / env.PYPROJECT_TOML
+            latest_file = latest_commit.tree / Project.pyproject_toml_path()
         except KeyError:
             print("Error: 'pyproject.toml' not found in the latest or previous commit.")
             return
