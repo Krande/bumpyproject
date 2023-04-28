@@ -25,8 +25,8 @@ class Project:
         if git_old_version is not None and current_version != git_old_version:
             old_sv, git_old_sv = semver.Version.parse(current_version), semver.Version.parse(git_old_version)
             logger.warning(f"Latest git commit version {current_version=} != {git_old_version=} from git")
-            res = old_sv - git_old_sv
             print('sd')
+            # TODO: Ensure that the bump is only a single level
 
         new_version = BumpHelper.bump_version(current_version, bump_level)
 
