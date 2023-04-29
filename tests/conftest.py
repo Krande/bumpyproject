@@ -10,7 +10,7 @@ import git
 MOCK_PROJ_A_DIR = pathlib.Path(__file__).parent.parent / "files/mock_project_a"
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def mock_proj_a():
     # Create a temporary directory for the remote repository
     with tempfile.TemporaryDirectory() as temp_dir:

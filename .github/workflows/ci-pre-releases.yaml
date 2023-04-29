@@ -8,7 +8,7 @@ on:
 
 jobs:
   bump:
-    name: Bump - ${{ matrix.images.name }}
+    name: Bump
     if: |
       contains(github.event.head_commit.message, '[pre]') ||
       ${{ github.event.workflow_run.conclusion == 'success' }}

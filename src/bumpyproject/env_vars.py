@@ -7,8 +7,7 @@ load_dotenv()
 
 RELEASE_TAG = os.environ.get("RELEASE_TAG", "alpha")
 GIT_ROOT_DIR = os.getenv("GIT_ROOT_DIR", ".")
-if isinstance(GIT_ROOT_DIR, str):
-    GIT_ROOT_DIR = pathlib.Path(GIT_ROOT_DIR)
+
 
 # CLI arguments (that also have env variables)
 IGNORE_GIT_STATE = os.getenv("IGNORE_GIT_STATE", False)

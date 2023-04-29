@@ -11,7 +11,7 @@ class PypiHelper:
         latest_pypi_version = data["info"]["version"]
 
         if "a" in latest_pypi_version:
-            latest_pypi_version = latest_pypi_version.replace("a", f"-alpha.")
+            latest_pypi_version = latest_pypi_version.replace("a", "-alpha.")
 
         return latest_pypi_version
 

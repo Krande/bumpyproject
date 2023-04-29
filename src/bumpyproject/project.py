@@ -22,10 +22,7 @@ class Project:
         current_version = Project.get_pyproject_version()
 
         if env.CHECK_GIT:
-            git_old_version = GitHelper.get_pyproject_toml_version_from_latest_pushed_commit()
-            if git_old_version is not None and current_version != git_old_version:
-                old_sv, git_old_sv = semver.Version.parse(current_version), semver.Version.parse(git_old_version)
-                logger.warning(f"Latest git commit version {current_version=} != {git_old_version=} from git")
+            GitHelper.check_git_history()
 
         new_version = BumpHelper.bump_version(current_version, bump_level)
 
@@ -65,15 +62,20 @@ class Project:
             GitHelper.push()
 
     @staticmethod
+    def make_py_ver_semver(pyver: str) -> str:
+        # Convert back the pre-release tag from PEP 440 compliant to semver compliant
+        if env.RELEASE_TAG in pyver:
+            pyver = pyver.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
+
+        return pyver
+
+    @staticmethod
     def get_pyproject_version() -> str:
         with open(Project.pyproject_toml_path(), mode="r") as fp:
             toml_data = tomlkit.load(fp)
 
         old_version = toml_data["project"]["version"]
-
-        # Convert back the pre-release tag from PEP 440 compliant to semver compliant
-        if env.RELEASE_TAG in old_version:
-            old_version = old_version.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
+        old_version = Project.make_py_ver_semver(old_version)
 
         return old_version
 
@@ -127,12 +129,15 @@ class Project:
         pyproject_toml = env.PYPROJECT_TOML
 
         if isinstance(pyproject_toml, str):
-            pyproject_toml = pathlib.Path(env.PYPROJECT_TOML).resolve()
+            pyproject_toml = pathlib.Path(pyproject_toml)
 
         if not pyproject_toml.exists():
-            pyproject_toml = env.GIT_ROOT_DIR / env.PYPROJECT_TOML
+            from bumpyproject.git_helper import GitHelper
+
+            pyproject_toml = GitHelper.get_git_root_dir() / env.PYPROJECT_TOML
 
         if not pyproject_toml.exists():
-            raise FileNotFoundError(f"Could not find {env.PYPROJECT_TOML}")
+            raise FileNotFoundError(f"Could not find {pyproject_toml}")
 
+        pyproject_toml = pyproject_toml.resolve().absolute()
         return pyproject_toml

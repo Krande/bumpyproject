@@ -4,7 +4,34 @@ from bumpyproject import env_vars as env
 from bumpyproject.versions import BumpLevel
 
 
+class BumpLevelSizeError(Exception):
+    pass
+
+
 class BumpHelper:
+    @staticmethod
+    def version_to_tuple(version: str) -> tuple:
+        ver = semver.VersionInfo.parse(version).to_tuple()
+        output = []
+        for x in ver:
+            if x is None:
+                output.append(0)
+            elif isinstance(x, int):
+                output.append(x)
+            elif env.RELEASE_TAG in x:
+                res = int(float(x.split(".")[-1]))
+                output.append(res)
+            else:
+                raise ValueError(f"Invalid version tuple {ver}")
+
+        return tuple(output)
+
+    @staticmethod
+    def get_bump_delta(old_version: str, new_version: str) -> list[int, int, int, int, int]:
+        new_tuple, old_tuple = BumpHelper.version_to_tuple(new_version), BumpHelper.version_to_tuple(old_version)
+        res = [x - y for x, y in zip(new_tuple, old_tuple)]
+        return res
+
     @staticmethod
     def is_newer(old_version: str, new_version: str) -> bool:
         if env.RELEASE_TAG in old_version:
