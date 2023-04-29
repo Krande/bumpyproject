@@ -31,8 +31,6 @@ class GitHelper:
                 f"Cannot bump {current_version=} from {git_old_version=} because it is not a single level bump"
             )
 
-
-
     @staticmethod
     def get_pyproject_toml_version_from_latest_pushed_commit():
         # Initialize the repo object
