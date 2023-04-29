@@ -21,12 +21,8 @@ class Project:
 
         current_version = Project.get_pyproject_version()
 
-        git_old_version = GitHelper.get_pyproject_toml_version_from_latest_pushed_commit()
-        if git_old_version is not None and current_version != git_old_version:
-            old_sv, git_old_sv = semver.Version.parse(current_version), semver.Version.parse(git_old_version)
-            logger.warning(f"Latest git commit version {current_version=} != {git_old_version=} from git")
-            print('sd')
-            # TODO: Ensure that the bump is only a single level
+        if env.CHECK_GIT:
+            GitHelper.check_git_history()
 
         new_version = BumpHelper.bump_version(current_version, bump_level)
 
@@ -133,12 +129,15 @@ class Project:
         pyproject_toml = env.PYPROJECT_TOML
 
         if isinstance(pyproject_toml, str):
-            pyproject_toml = pathlib.Path(env.PYPROJECT_TOML).resolve()
+            pyproject_toml = pathlib.Path(pyproject_toml)
 
         if not pyproject_toml.exists():
-            pyproject_toml = env.GIT_ROOT_DIR / env.PYPROJECT_TOML
+            from bumpyproject.git_helper import GitHelper
+
+            pyproject_toml = GitHelper.get_git_root_dir() / env.PYPROJECT_TOML
 
         if not pyproject_toml.exists():
-            raise FileNotFoundError(f"Could not find {env.PYPROJECT_TOML}")
+            raise FileNotFoundError(f"Could not find {pyproject_toml}")
 
+        pyproject_toml = pyproject_toml.resolve().absolute()
         return pyproject_toml

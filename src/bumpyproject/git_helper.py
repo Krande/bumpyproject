@@ -1,10 +1,13 @@
 import pathlib
 
 import git
+import semver
 import tomlkit
 from bumpyproject import env_vars as env
+from bumpyproject.bumper import BumpHelper, BumpLevelSizeError
 from bumpyproject.project import Project
 from bumpyproject.versions import BumpLevel
+from bumpyproject.log_utils import logger
 
 
 class DirtyRepoError(Exception):
@@ -13,25 +16,42 @@ class DirtyRepoError(Exception):
 
 class GitHelper:
     @staticmethod
+    def check_git_history():
+        current_version = Project.get_pyproject_version()
+        git_old_version = GitHelper.get_pyproject_toml_version_from_latest_pushed_commit()
+        if git_old_version is None or current_version == git_old_version:
+            return None
+
+        delta = BumpHelper.get_bump_delta(git_old_version, current_version)
+
+        # Catch bumping more than one level
+        non_ones_or_zeros = [i for i, x in enumerate(delta) if x != 0 and x != 1]
+        if len(non_ones_or_zeros) > 0:
+            raise BumpLevelSizeError(
+                f"Cannot bump {current_version=} from {git_old_version=} because it is not a single level bump"
+            )
+
+
+
+    @staticmethod
     def get_pyproject_toml_version_from_latest_pushed_commit():
         # Initialize the repo object
-        repo = GitHelper.get_git_repo()
         remote = GitHelper.get_git_remote()
 
         # If there are no pushed commits return None
         if len(remote.refs) == 0:
             return None
 
-        # Get the latest and previous commits
-        latest_commit = repo.head.commit
         # Get the last pushed commit
+        latest_pushed_commit = remote.refs[0].commit
 
         pytoml = Project.pyproject_toml_path()
-        toml_rel = pytoml.relative_to(GitHelper.get_git_root_dir())
+        root_dir = GitHelper.get_git_root_dir()
+        toml_rel = pytoml.relative_to(root_dir)
 
         # Get the pyproject.toml file from both commits
         try:
-            latest_file = latest_commit.tree / str(toml_rel)
+            latest_file = latest_pushed_commit.tree / str(toml_rel)
         except KeyError:
             print("Error: 'pyproject.toml' not found in the latest or previous commit.")
             return
@@ -68,9 +88,17 @@ class GitHelper:
     @staticmethod
     def push():
         curr_repo = GitHelper.get_git_repo()
-        remote.push(refspec="master:master")
+        remote = GitHelper.get_git_remote()
+        remote.push(refspec=f"{curr_repo.active_branch}:{curr_repo.active_branch}")
         curr_repo.git.push()
         curr_repo.git.push("--tags")
+
+    @staticmethod
+    def create_branch(branch_name, push=True):
+        curr_repo = GitHelper.get_git_repo()
+        curr_repo.git.checkout("-b", branch_name)
+        if push:
+            curr_repo.git.push("--set-upstream", "origin", branch_name)
 
     @staticmethod
     def get_bump_level_from_commit() -> BumpLevel:
@@ -92,6 +120,8 @@ class GitHelper:
         git_root_dir = env.GIT_ROOT_DIR
         if isinstance(git_root_dir, str):
             git_root_dir = pathlib.Path(git_root_dir)
+
+        git_root_dir = git_root_dir.resolve().absolute()
         return git_root_dir
 
     @staticmethod
