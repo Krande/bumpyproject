@@ -10,7 +10,7 @@ jobs:
   bump:
     name: Bump
     if: |
-      contains(github.event.head_commit.message, '[pre]') ||
+      contains(github.event.head_commit.message, '[pre]') &&
       ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     defaults:
