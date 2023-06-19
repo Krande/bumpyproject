@@ -8,8 +8,8 @@ authors = [
 readme = "README.md"
 
 dependencies = [
-    "semver=>3.0.0",
-    "tomlkit=>0.11.8",
+    "semver>=3.0.0",
+    "tomlkit>=0.11.8",
     "azure-identity",
     "azure-mgmt-containerregistry",
     "azure-containerregistry",
