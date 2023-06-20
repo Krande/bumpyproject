@@ -1,7 +1,7 @@
 import argparse
 import pathlib
 
-from bumpyproject.project import Project
+from bumpyproject import project
 from bumpyproject import env_vars as env
 
 
@@ -61,7 +61,7 @@ def main():
     if args.git_push:
         env.GIT_PUSH = args.git_push
 
-    Project.bump_project(args.bump_level)
+    project.bump_project(args.bump_level)
 
 
 if __name__ == "__main__":

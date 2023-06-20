@@ -1,6 +1,6 @@
 import argparse
 
-from bumpyproject.docker_helper import DockerHelper
+from bumpyproject import docker_helper
 
 
 def main():
@@ -18,7 +18,7 @@ def main():
     parser.add_argument("--use-native-client", action="store_true", help="Use native docker client.")
 
     args = parser.parse_args()
-    DockerHelper.bump_acr_docker_image(
+    docker_helper.bump_acr_docker_image(
         args.context_dir, args.dockerfile_name, args.build, args.push, args.use_native_client
     )
 
