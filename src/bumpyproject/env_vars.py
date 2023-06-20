@@ -1,9 +1,15 @@
 import os
 import pathlib
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 
-load_dotenv()
+curr_env = '.env'
+res = find_dotenv(curr_env)
+if not res:
+    curr_env = pathlib.Path(os.getcwd()) / '.env'
+
+load_dotenv(curr_env)
+
 
 RELEASE_TAG = os.environ.get("RELEASE_TAG", "alpha")
 GIT_ROOT_DIR = os.getenv("GIT_ROOT_DIR", ".")

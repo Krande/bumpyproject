@@ -155,8 +155,8 @@ def get_pyproject_toml_path_from_env() -> pathlib.Path:
 
     if not pyproject_toml.exists():
         from bumpyproject.git_helper import GitHelper
-
-        pyproject_toml = GitHelper.get_git_root_dir() / env.PYPROJECT_TOML
+        git_helper = GitHelper()
+        pyproject_toml = git_helper.repo_root_dir / env.PYPROJECT_TOML
 
     if not pyproject_toml.exists():
         raise FileNotFoundError(f"Could not find {pyproject_toml}")

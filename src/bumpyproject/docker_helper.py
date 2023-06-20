@@ -12,7 +12,7 @@ from bumpyproject import project
 colors = {"black": 30, "red": 31, "green": 32, "yellow": 33, "blue": 34, "magenta": 35, "cyan": 36, "white": 37}
 
 
-def bump_acr_docker_image(context_dir, dockerfile_name, build, push, use_native_client):
+def bump_acr_docker_image(context_dir, dockerfile_name, should_build, should_push, use_native_client):
     if env.ACR_NAME is None:
         raise ValueError("ACR_NAME environment variable is not set")
 
@@ -30,11 +30,11 @@ def bump_acr_docker_image(context_dir, dockerfile_name, build, push, use_native_
     # Build the Docker image
     tagged_name = f"{env.ACR_NAME}.azurecr.io/{env.ACR_REPO_NAME}:{pyproject_version}"
 
-    if build or push:
+    if should_build or should_push:
         build(context_dir, dockerfile_name, tagged_name)
 
     # Push the Docker image to Azure Container Registry
-    if push:
+    if should_push:
         push(repo=tagged_name, use_native_client=use_native_client)
 
 
