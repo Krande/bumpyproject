@@ -46,8 +46,6 @@ class GitHelper:
     def git_remote(self) -> git.Remote:
         return self._remote
 
-
-
     def check_git_state(self):
         curr_repo = self._git_repo
         if curr_repo.is_dirty(self):
@@ -60,8 +58,18 @@ class GitHelper:
     def commit_and_tag(self, old_version, new_version):
         commit_message = f"bump {old_version} --> {new_version}"
         curr_repo = self.git_repo
-        curr_repo.git.config("user.email", env.GIT_USER_EMAIL)
-        curr_repo.git.config("user.name", env.GIT_USER)
+
+        # Get configuration reader for the repository
+        config_reader = curr_repo.config_reader()
+
+        # Check if user.name and user.email are set
+        user_name_is_set = config_reader.has_option('user', 'name')
+        user_email_is_set = config_reader.has_option('user', 'email')
+        if not user_name_is_set:
+            curr_repo.git.config("user.name", env.GIT_USER)
+        if not user_email_is_set:
+            curr_repo.git.config("user.email", env.GIT_USER_EMAIL)
+
         curr_repo.git.execute(["git", "commit", "-am", commit_message])
         curr_repo.git.execute(["git", "tag", "-a", new_version, "-m", commit_message])
 

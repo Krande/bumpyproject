@@ -61,7 +61,7 @@ class Project:
     def docker_context(self) -> pathlib.Path | None:
         return self._docker_context
 
-    def check_git_history(self):
+    def check_git_history(self, new_version):
         from bumpyproject import bumper
 
         current_version = self.get_pyproject_version()
@@ -69,13 +69,13 @@ class Project:
         if git_old_version is None or current_version == git_old_version:
             return None
 
-        delta = bumper.get_bump_delta(git_old_version, current_version)
+        delta = bumper.get_bump_delta(git_old_version, new_version)
 
         # Catch bumping more than one level
         non_ones_or_zeros = [i for i, x in enumerate(delta) if x != 0 and x != 1]
         if len(non_ones_or_zeros) > 0:
             raise bumper.BumpLevelSizeError(
-                f"Cannot bump {current_version=} from {git_old_version=} because it is not a single level bump"
+                f"Cannot bump to {new_version=} from {git_old_version=} because it is not a single level bump"
             )
 
     def get_pyproject_toml_version_from_latest_pushed_commit(self):
@@ -86,8 +86,15 @@ class Project:
         if len(remote.refs) == 0:
             return None
 
-        # Get the last pushed commit
-        latest_pushed_commit = remote.refs[0].commit
+        active_local_branch = self.git.git_repo.active_branch.name
+        remote_head = None
+        for ref in remote.refs:
+            if ref.remote_head == active_local_branch:
+                remote_head = ref
+                break
+
+        # Get the last pushed commit to active branch
+        latest_pushed_commit = remote_head.commit
 
         pytoml = self.pyproject_toml_path
 
@@ -110,7 +117,7 @@ class Project:
         return version
 
     def bump(self, bump_level):
-        from bumpyproject.py_distro import CondaHelper, PypiHelper
+        from bumpyproject import py_distro
         from bumpyproject import bumper
         from bumpyproject import docker_helper
 
@@ -121,18 +128,18 @@ class Project:
 
         current_version = self.get_pyproject_version()
 
-        if env.CHECK_GIT:
-            self.check_git_history()
-
         new_version = bumper.bump_version(current_version, bump_level)
 
+        if env.CHECK_GIT:
+            self.check_git_history(new_version)
+
         if env.CHECK_PYPI:
-            pypi_version = PypiHelper.get_latest_pypi_version()
+            pypi_version = py_distro.get_latest_pypi_version()
             if not bumper.is_newer(current_version, pypi_version):
                 raise ValueError(f"New version {new_version=} < {pypi_version=}")
 
         if env.CHECK_CONDA:
-            conda_version = CondaHelper.get_latest_conda_version()
+            conda_version = py_distro.get_latest_conda_version()
             if not bumper.is_newer(current_version, conda_version):
                 raise ValueError(f"New version {new_version=} < {conda_version=}")
 
@@ -173,7 +180,7 @@ class Project:
 
 def make_py_ver_semver(pyver: str) -> str:
     # Convert back the pre-release tag from PEP 440 compliant to semver compliant
-    if env.RELEASE_TAG in pyver:
+    if env.RELEASE_TAG in pyver and '-' not in pyver:
         pyver = pyver.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
 
     return pyver

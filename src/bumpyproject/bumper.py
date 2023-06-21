@@ -31,6 +31,16 @@ def get_bump_delta(old_version: str, new_version: str) -> list[int, int, int, in
     return res
 
 
+def make_semver_compatible(version: str) -> str:
+    if env.RELEASE_TAG in version:
+        version = version.replace(env.RELEASE_TAG, f"-{env.RELEASE_TAG}")
+
+    elif "a" in version:
+        version = version.replace("a", "-alpha.")
+
+    return version
+
+
 def is_newer(old_version: str, new_version: str) -> bool:
     if env.RELEASE_TAG in old_version:
         old_version = old_version.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
