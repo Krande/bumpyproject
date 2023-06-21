@@ -61,13 +61,16 @@ class Project:
     def docker_context(self) -> pathlib.Path | None:
         return self._docker_context
 
-    def check_git_history(self, new_version):
+    def check_git_history(self, new_version=None):
         from bumpyproject import bumper
 
         current_version = self.get_pyproject_version()
         git_old_version = self.get_pyproject_toml_version_from_latest_pushed_commit()
         if git_old_version is None or current_version == git_old_version:
             return None
+
+        if new_version is None:
+            new_version = current_version
 
         delta = bumper.get_bump_delta(git_old_version, new_version)
 
@@ -180,7 +183,7 @@ class Project:
 
 def make_py_ver_semver(pyver: str) -> str:
     # Convert back the pre-release tag from PEP 440 compliant to semver compliant
-    if env.RELEASE_TAG in pyver and '-' not in pyver:
+    if env.RELEASE_TAG in pyver and "-" not in pyver:
         pyver = pyver.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
 
     return pyver
