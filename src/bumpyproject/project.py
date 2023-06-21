@@ -6,6 +6,9 @@ import tomlkit
 from bumpyproject.git_helper import GitHelper
 
 from bumpyproject import env_vars as env
+from bumpyproject import py_distro
+from bumpyproject import bumper
+from bumpyproject import docker_helper
 
 
 class Project:
@@ -120,9 +123,6 @@ class Project:
         return version
 
     def bump(self, bump_level):
-        from bumpyproject import py_distro
-        from bumpyproject import bumper
-        from bumpyproject import docker_helper
 
         git_helper = self.git
 

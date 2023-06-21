@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class BumpLevel(Enum):
+class BumpLevel(str, Enum):
     MAJOR = "major"
     MINOR = "minor"
     PATCH = "patch"
@@ -9,7 +9,7 @@ class BumpLevel(Enum):
 
     @classmethod
     def from_string(cls, value: str):
-        keymap = {x.value.lower(): x for x in BumpLevel}
+        keymap = {x.lower(): x for x in BumpLevel}
         # add a short-name for PRE_RELEASE
         keymap.update({"pre": BumpLevel.PRE_RELEASE})
 
