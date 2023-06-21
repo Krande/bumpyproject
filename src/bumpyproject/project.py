@@ -3,13 +3,13 @@ import pathlib
 
 import semver
 import tomlkit
+from bumpyproject.git_helper import GitHelper
 
 from bumpyproject import env_vars as env
-from bumpyproject.log_utils import logger
 
 
 class Project:
-    def __init__(self, pyproject_toml=None, package_json=None):
+    def __init__(self, root_dir=None, pyproject_toml=None, package_json=None, dockerfile=None, docker_context=None):
         if pyproject_toml is None:
             pyproject_toml = env.PYPROJECT_TOML
 
@@ -22,66 +22,145 @@ class Project:
         if not pyproject_toml.exists():
             raise FileNotFoundError(f"Could not find {pyproject_toml}")
 
+        self._root_dir = root_dir
         self._pyproject_toml = pyproject_toml.resolve().absolute()
         self._package_json = package_json
+        self._git_helper = GitHelper(self.root_dir)
+        self._dockerfile = dockerfile if dockerfile is None else pathlib.Path(dockerfile)
+        self._docker_context = docker_context if docker_context is None else pathlib.Path(docker_context)
 
     @property
     def pyproject_toml_path(self):
         return self._pyproject_toml
 
+    @property
+    def package_json_path(self):
+        return self._package_json
 
-def bump_project(bump_level):
-    from bumpyproject.git_helper import GitHelper
-    from bumpyproject.py_distro import CondaHelper, PypiHelper
-    from bumpyproject import bumper
-    from bumpyproject import docker_helper
+    @property
+    def root_dir(self):
+        return self._root_dir
 
-    git_helper = GitHelper(env.GIT_ROOT_DIR)
+    @property
+    def git(self) -> GitHelper:
+        return self._git_helper
 
-    if env.CI_GIT_BUMP:
-        bump_level = git_helper.get_bump_level_from_commit()
+    @property
+    def dockerfile(self) -> pathlib.Path | None:
+        return self._dockerfile
 
-    current_version = get_pyproject_version()
+    @property
+    def docker_context(self) -> pathlib.Path | None:
+        return self._docker_context
 
-    if env.CHECK_GIT:
-        git_helper.check_git_history()
+    def check_git_history(self):
+        from bumpyproject import bumper
 
-    new_version = bumper.bump_version(current_version, bump_level)
+        current_version = self.get_pyproject_version()
+        git_old_version = self.get_pyproject_toml_version_from_latest_pushed_commit()
+        if git_old_version is None or current_version == git_old_version:
+            return None
 
-    if env.CHECK_PYPI:
-        pypi_version = PypiHelper.get_latest_pypi_version()
-        if not bumper.is_newer(current_version, pypi_version):
-            raise ValueError(f"New version {new_version=} < {pypi_version=}")
+        delta = bumper.get_bump_delta(git_old_version, current_version)
 
-    if env.CHECK_CONDA:
-        conda_version = CondaHelper.get_latest_conda_version()
-        if not bumper.is_newer(current_version, conda_version):
-            raise ValueError(f"New version {new_version=} < {conda_version=}")
+        # Catch bumping more than one level
+        non_ones_or_zeros = [i for i, x in enumerate(delta) if x != 0 and x != 1]
+        if len(non_ones_or_zeros) > 0:
+            raise bumper.BumpLevelSizeError(
+                f"Cannot bump {current_version=} from {git_old_version=} because it is not a single level bump"
+            )
 
-    if env.CHECK_ACR:
-        acr_version = docker_helper.get_latest_tagged_image()
-        if not bumper.is_newer(current_version, acr_version):
-            raise ValueError(f"New version {new_version=} < {acr_version=}")
+    def get_pyproject_toml_version_from_latest_pushed_commit(self):
+        # Initialize the repo object
+        remote = self.git.git_remote
 
-    # Before the image is pushed we do some checks
-    if not env.IGNORE_GIT_STATE:
-        git_helper.check_git_state()
+        # If there are no pushed commits return None
+        if len(remote.refs) == 0:
+            return None
 
-    # If exists bump package.json file
-    is_pkg_json_bumped = True
-    if env.PKG_JSON.exists():
-        is_pkg_json_bumped = bump_package_json(new_version)
+        # Get the last pushed commit
+        latest_pushed_commit = remote.refs[0].commit
 
-    # Bump pyproject.toml file
-    is_pyproject_bumped = bump_pyproject(new_version)
+        pytoml = self.pyproject_toml_path
 
-    # Commit and tag the new version
-    if not env.IGNORE_GIT_STATE and (is_pyproject_bumped and is_pkg_json_bumped):
-        git_helper.commit_and_tag(current_version, new_version)
+        toml_rel = pytoml.relative_to(self.git.repo_root_dir)
 
-    # Push the new version to git
-    if not env.IGNORE_GIT_STATE and env.GIT_PUSH:
-        git_helper.push()
+        # Get the pyproject.toml file from both commits
+        try:
+            latest_file = latest_pushed_commit.tree / str(toml_rel)
+        except KeyError:
+            print("Error: 'pyproject.toml' not found in the latest or previous commit.")
+            return
+
+        # Read the contents of the files
+        toml_data = tomlkit.parse(latest_file.data_stream.read().decode("utf-8"))
+
+        # Get the version from the file
+        version = toml_data["project"]["version"]
+
+        version = make_py_ver_semver(version)
+        return version
+
+    def bump(self, bump_level):
+        from bumpyproject.py_distro import CondaHelper, PypiHelper
+        from bumpyproject import bumper
+        from bumpyproject import docker_helper
+
+        git_helper = self.git
+
+        if env.CI_GIT_BUMP:
+            bump_level = git_helper.get_bump_level_from_commit()
+
+        current_version = self.get_pyproject_version()
+
+        if env.CHECK_GIT:
+            self.check_git_history()
+
+        new_version = bumper.bump_version(current_version, bump_level)
+
+        if env.CHECK_PYPI:
+            pypi_version = PypiHelper.get_latest_pypi_version()
+            if not bumper.is_newer(current_version, pypi_version):
+                raise ValueError(f"New version {new_version=} < {pypi_version=}")
+
+        if env.CHECK_CONDA:
+            conda_version = CondaHelper.get_latest_conda_version()
+            if not bumper.is_newer(current_version, conda_version):
+                raise ValueError(f"New version {new_version=} < {conda_version=}")
+
+        if env.CHECK_ACR:
+            acr_version = docker_helper.get_latest_tagged_image()
+            if not bumper.is_newer(current_version, acr_version):
+                raise ValueError(f"New version {new_version=} < {acr_version=}")
+
+        # Before the image is pushed we do some checks
+        if not env.IGNORE_GIT_STATE:
+            git_helper.check_git_state()
+
+        # If exists bump package.json file
+        is_pkg_json_bumped = True
+        if env.PKG_JSON.exists():
+            is_pkg_json_bumped = bump_package_json(new_version)
+
+        # Bump pyproject.toml file
+        is_pyproject_bumped = bump_pyproject(self.pyproject_toml_path, new_version)
+
+        # Commit and tag the new version
+        if not env.IGNORE_GIT_STATE and (is_pyproject_bumped and is_pkg_json_bumped):
+            git_helper.commit_and_tag(current_version, new_version)
+
+        # Push the new version to git
+        if not env.IGNORE_GIT_STATE and env.GIT_PUSH:
+            git_helper.push()
+
+    def get_pyproject_version(self) -> str:
+        with open(self.pyproject_toml_path, mode="r") as fp:
+            toml_data = tomlkit.load(fp)
+
+        old_version = toml_data["project"]["version"]
+        old_version = make_py_ver_semver(old_version)
+
+        return old_version
 
 
 def make_py_ver_semver(pyver: str) -> str:
@@ -92,18 +171,8 @@ def make_py_ver_semver(pyver: str) -> str:
     return pyver
 
 
-def get_pyproject_version() -> str:
-    with open(get_pyproject_toml_path_from_env(), mode="r") as fp:
-        toml_data = tomlkit.load(fp)
-
-    old_version = toml_data["project"]["version"]
-    old_version = make_py_ver_semver(old_version)
-
-    return old_version
-
-
-def bump_pyproject(new_version) -> bool:
-    with open(get_pyproject_toml_path_from_env(), mode="r") as fp:
+def bump_pyproject(pyproject_toml_path: str | pathlib.Path, new_version: str) -> bool:
+    with open(pyproject_toml_path, mode="r") as fp:
         toml_data = tomlkit.load(fp)
 
     old_version = toml_data["project"]["version"]
@@ -155,6 +224,7 @@ def get_pyproject_toml_path_from_env() -> pathlib.Path:
 
     if not pyproject_toml.exists():
         from bumpyproject.git_helper import GitHelper
+
         git_helper = GitHelper()
         pyproject_toml = git_helper.repo_root_dir / env.PYPROJECT_TOML
 

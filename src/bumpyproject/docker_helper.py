@@ -1,26 +1,22 @@
-import pathlib
 import subprocess
 
 import docker
 from azure.containerregistry import ContainerRegistryClient
 from azure.identity import ClientSecretCredential
 
-from bumpyproject import env_vars as env
 from bumpyproject import bumper
-from bumpyproject import project
+from bumpyproject import env_vars as env
+from bumpyproject.project import Project
 
 colors = {"black": 30, "red": 31, "green": 32, "yellow": 33, "blue": 34, "magenta": 35, "cyan": 36, "white": 37}
 
 
-def bump_acr_docker_image(context_dir, dockerfile_name, should_build, should_push, use_native_client):
+def bump_acr_docker_image(project: Project, should_build, should_push, use_native_client):
     if env.ACR_NAME is None:
         raise ValueError("ACR_NAME environment variable is not set")
 
     if env.ACR_REPO_NAME is None:
         raise ValueError("repository argument is not set")
-
-    if isinstance(context_dir, str):
-        context_dir = pathlib.Path(context_dir).resolve().absolute()
 
     pyproject_version = project.get_pyproject_version()
     current_docker_image_version = get_latest_tagged_image()
@@ -31,7 +27,7 @@ def bump_acr_docker_image(context_dir, dockerfile_name, should_build, should_pus
     tagged_name = f"{env.ACR_NAME}.azurecr.io/{env.ACR_REPO_NAME}:{pyproject_version}"
 
     if should_build or should_push:
-        build(context_dir, dockerfile_name, tagged_name)
+        build(project.docker_context, project.dockerfile.name, tagged_name)
 
     # Push the Docker image to Azure Container Registry
     if should_push:

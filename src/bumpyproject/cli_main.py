@@ -1,8 +1,8 @@
 import argparse
 import pathlib
 
-from bumpyproject import project
 from bumpyproject import env_vars as env
+from bumpyproject import project
 
 
 def main():
@@ -14,6 +14,8 @@ def main():
         default="pre-release",
     )
     parser.add_argument("--git-root", help="Path to git root directory", default=".")
+    parser.add_argument("--pyproject-toml", help="Path to pyproject.toml", default=env.PYPROJECT_TOML)
+    parser.add_argument("--package-json", help="Path to package.json", default=env.PKG_JSON)
     parser.add_argument("--ignore-git-state", action="store_true", help="Ignores checking for unstaged git commit.")
     parser.add_argument(
         "--ci-git-bump",
@@ -61,7 +63,8 @@ def main():
     if args.git_push:
         env.GIT_PUSH = args.git_push
 
-    project.bump_project(args.bump_level)
+    proj = project.Project(pyproject_toml=args.pyproject_toml, package_json=args.package_json)
+    proj.bump(args.bump_level)
 
 
 if __name__ == "__main__":
