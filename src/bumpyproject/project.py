@@ -28,6 +28,14 @@ class Project:
         self._git_helper = GitHelper(self.root_dir)
         self._dockerfile = dockerfile if dockerfile is None else pathlib.Path(dockerfile)
         self._docker_context = docker_context if docker_context is None else pathlib.Path(docker_context)
+        if self._dockerfile is not None and not self._dockerfile.exists():
+            if self._docker_context is not None:
+                self._dockerfile = self._docker_context / self._dockerfile.name
+            if not self._dockerfile.exists():
+                raise FileNotFoundError(f"Could not find {self._dockerfile}")
+
+            self._dockerfile = self._dockerfile.absolute().resolve()
+            self._docker_context = self._docker_context.absolute().resolve()
 
     @property
     def pyproject_toml_path(self):

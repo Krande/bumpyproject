@@ -1,3 +1,4 @@
+import pathlib
 import subprocess
 
 import docker
@@ -27,7 +28,7 @@ def bump_acr_docker_image(project: Project, should_build, should_push, use_nativ
     tagged_name = f"{env.ACR_NAME}.azurecr.io/{env.ACR_REPO_NAME}:{pyproject_version}"
 
     if should_build or should_push:
-        build(project.docker_context, project.dockerfile.name, tagged_name)
+        build(project.docker_context, project.dockerfile, tagged_name)
 
     # Push the Docker image to Azure Container Registry
     if should_push:
@@ -64,13 +65,16 @@ def print_logs(build_logs, color="green"):
             print("Error parsing output from docker image build: %s" % json_output)
 
 
-def build(context_dir, dockerfile_name, tag):
+def build(context_dir: pathlib.Path, dockerfile: pathlib.Path, tag):
     print(f'Building docker image with tag "{tag}"...')
+
+    # find relative path from context dir to dockerfile
+    dockerfile = dockerfile.relative_to(context_dir)
     print_logs(
         docker.APIClient().build(
             path=str(context_dir),
             tag=tag,
-            dockerfile=str(context_dir / dockerfile_name),
+            dockerfile=str(dockerfile),
             decode=True,
         )
     )
