@@ -1,4 +1,5 @@
 import json
+import os
 import pathlib
 
 import semver
@@ -9,17 +10,19 @@ from bumpyproject import docker_helper
 from bumpyproject import env_vars as env
 from bumpyproject import py_distro
 from bumpyproject.git_helper import GitHelper
+from bumpyproject.helpers import find_file_in_subdirectories
 from bumpyproject.versions import make_semver_compatible
 
 
 class Project:
     def __init__(self, root_dir=None, pyproject_toml=None, package_json=None, dockerfile=None, docker_context=None,
                  pypi_url=None, conda_url=None):
+
         if pyproject_toml is None:
-            pyproject_toml = env.PYPROJECT_TOML
+            pyproject_toml = find_file_in_subdirectories(os.getcwd(), "pyproject.toml")
 
         if package_json is None:
-            package_json = env.PKG_JSON
+            package_json = find_file_in_subdirectories(os.getcwd(), "package.json")
 
         if isinstance(pyproject_toml, str):
             pyproject_toml = pathlib.Path(pyproject_toml)
