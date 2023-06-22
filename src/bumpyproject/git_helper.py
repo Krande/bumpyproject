@@ -18,9 +18,6 @@ class DirtyRepoError(Exception):
 
 class GitHelper:
     def __init__(self, git_root_dir=None, project=None):
-        if git_root_dir is None:
-            git_root_dir = env.GIT_ROOT_DIR
-
         if isinstance(git_root_dir, str):
             git_root_dir = pathlib.Path(git_root_dir)
 

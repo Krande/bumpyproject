@@ -1,15 +1,15 @@
 from __future__ import annotations
+
 import pathlib
 import subprocess
+from typing import TYPE_CHECKING
 
 import docker
 from azure.containerregistry import ContainerRegistryClient
 from azure.identity import ClientSecretCredential
-from typing import TYPE_CHECKING
 
 from bumpyproject import bumper
 from bumpyproject import env_vars as env
-from bumpyproject.bumper import NoVersionChangeError
 from bumpyproject.versions import get_latest_version_from_list_of_versions_by_numeric_sorting
 
 if TYPE_CHECKING:
@@ -66,7 +66,7 @@ class DockerACRHelper:
     def get_latest_tagged_image(self):
         # Get the service principal credentials
         credential = ClientSecretCredential(
-            tenant_id=env.AZ_TENANT_ID, client_id=env.ACR_CLIENT_ID, client_secret=env.ACR_CLIENT_SECRET
+            tenant_id=self._tenant_id, client_id=self._client_id, client_secret=self._client_secret
         )
 
         # Create a ContainerRegistryClient object
@@ -77,15 +77,15 @@ class DockerACRHelper:
         )
 
         # Get the list of tags for repository
-        tags = list(acr_client.list_tag_properties(repository=self.acr_repo_name))
-        versions = [tag.name for tag in tags]
+        versions = [tag.name for tag in acr_client.list_tag_properties(repository=self.acr_repo_name)]
         latest_version = get_latest_version_from_list_of_versions_by_numeric_sorting(versions)
 
-        print(f"The latest tagged image of {env.ACR_REPO_NAME} is: {latest_version}")
+        print(f"The latest tagged image of {self.acr_repo_name} is: {latest_version}")
 
         return latest_version
 
-    def build(self, context_dir: pathlib.Path, dockerfile: pathlib.Path, tag):
+    @staticmethod
+    def build(context_dir: pathlib.Path, dockerfile: pathlib.Path, tag):
         print(f'Building docker image with tag "{tag}"...')
 
         # find relative path from context dir to dockerfile
@@ -104,9 +104,9 @@ class DockerACRHelper:
     def push(self, repo, use_native_client=False):
         print(f'Pushing docker image with tag "{repo}" {use_native_client=}...')
         if self._client_id is None:
-            raise ValueError("ACR_CLIENT_ID environment variable is not set")
+            raise ValueError("AZ_ACR_SERVICE_PRINCIPAL_USERNAME environment variable is not set")
         if self._client_secret is None:
-            raise ValueError("ACR_CLIENT_SECRET environment variable is not set")
+            raise ValueError("AZ_ACR_SERVICE_PRINCIPAL_PASSWORD environment variable is not set")
 
         if use_native_client:
             subprocess.run(

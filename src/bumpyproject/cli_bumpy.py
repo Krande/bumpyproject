@@ -30,15 +30,16 @@ def docker(
         context_dir: Annotated[str, typer.Option()],
         dockerfile: Annotated[str, typer.Option()],
         acr_repo_name: Annotated[str, typer.Option(envvar="AZ_ACR_REPO_NAME")],
-        acr_name: Annotated[str, typer.Option(envvar="AZ_ACR_NAME")] = env.ACR_NAME,
+        acr_name: Annotated[str, typer.Option(envvar="AZ_ACR_NAME")],
+        tenant_id: Annotated[str, typer.Option(envvar="AZ_TENANT_ID")],
+        client_id: Annotated[str, typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_USERNAME")],
+        client_secret: Annotated[str, typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_PASSWORD")],
         build: bool = False,
         push: bool = False,
         use_native_client=False,
         pyproject_toml: Annotated[str, typer.Option(envvar="PYPROJECT_TOML")] = None,
         package_json: Annotated[str, typer.Option(envvar="PKG_JSON")] = None,
-        tenant_id: Annotated[str, typer.Option(envvar="AZ_TENANT_ID")] = None,
-        client_id: Annotated[str, typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_USERNAME")] = None,
-        client_secret: Annotated[str, typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_PASSWORD")] = None,
+
 ):
     proj = project.Project(
         pyproject_toml=pyproject_toml,
