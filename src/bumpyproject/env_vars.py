@@ -26,7 +26,7 @@ GIT_PUSH = os.getenv("GIT_PUSH", False)
 
 # Core env variables
 PYPROJECT_TOML = os.getenv("PYPROJECT_TOML", "pyproject.toml")
-PKG_JSON = pathlib.Path(os.getenv("PKG_JSON", "package.json"))
+PKG_JSON = pathlib.Path(os.getenv("PACKAGE_JSON", "package.json"))
 ONLY_VALID_REPOS = os.getenv("VALID_REPOS", "").split(";")
 
 # Git related env variables

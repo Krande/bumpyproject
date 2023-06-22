@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 
 from bumpyproject import bumper
 from bumpyproject import env_vars as env
+from bumpyproject.bumper import NoVersionChangeError
+from bumpyproject.versions import get_latest_version_from_list_of_versions_by_numeric_sorting
 
 if TYPE_CHECKING:
     from bumpyproject.project import Project
@@ -18,12 +20,12 @@ colors = {"black": 30, "red": 31, "green": 32, "yellow": 33, "blue": 34, "magent
 
 class DockerACRHelper:
     def __init__(
-        self,
-        acr_name,
-        acr_repo_name,
-        tenant_id=env.AZ_TENANT_ID,
-        client_id=env.ACR_CLIENT_ID,
-        client_secret=env.ACR_CLIENT_SECRET,
+            self,
+            acr_name,
+            acr_repo_name,
+            tenant_id=env.AZ_TENANT_ID,
+            client_id=env.ACR_CLIENT_ID,
+            client_secret=env.ACR_CLIENT_SECRET,
     ):
         self._acr_name = acr_name
         self._acr_repo_name = acr_repo_name
@@ -48,18 +50,18 @@ class DockerACRHelper:
     def bump_acr_docker_image(self, project: Project, should_build, should_push, use_native_client):
         pyproject_version = project.get_pyproject_version()
         current_docker_image_version = self.get_latest_tagged_image()
-        if not bumper.is_newer(current_docker_image_version, pyproject_version):
-            raise ValueError(f"New version {pyproject_version} is not newer than {current_docker_image_version}")
+
+        bumper.is_newer(current_docker_image_version, pyproject_version)
 
         # Build the Docker image
         tagged_name = f"{self.acr_name}.azurecr.io/{self.acr_repo_name}:{pyproject_version}"
 
         if should_build or should_push:
-            build(project.docker_context, project.dockerfile, tagged_name)
+            self.build(project.docker_context, project.dockerfile, tagged_name)
 
         # Push the Docker image to Azure Container Registry
         if should_push:
-            push(repo=tagged_name, use_native_client=use_native_client)
+            self.push(repo=tagged_name, use_native_client=use_native_client)
 
     def get_latest_tagged_image(self):
         # Get the service principal credentials
@@ -77,53 +79,63 @@ class DockerACRHelper:
         # Get the list of tags for repository
         tags = list(acr_client.list_tag_properties(repository=self.acr_repo_name))
         versions = [tag.name for tag in tags]
+        latest_version = get_latest_version_from_list_of_versions_by_numeric_sorting(versions)
 
-        latest_tag = tags[-1].name
-        print(f"The latest tagged image of {env.ACR_REPO_NAME} is: {latest_tag}")
-        return latest_tag
+        print(f"The latest tagged image of {env.ACR_REPO_NAME} is: {latest_version}")
 
+        return latest_version
 
-def build(context_dir: pathlib.Path, dockerfile: pathlib.Path, tag):
-    print(f'Building docker image with tag "{tag}"...')
+    def build(self, context_dir: pathlib.Path, dockerfile: pathlib.Path, tag):
+        print(f'Building docker image with tag "{tag}"...')
 
-    # find relative path from context dir to dockerfile
-    dockerfile = dockerfile.relative_to(context_dir)
-    print_logs(
-        docker.APIClient().build(
-            path=str(context_dir),
-            tag=tag,
-            dockerfile=str(dockerfile),
-            decode=True,
+        # find relative path from context dir to dockerfile
+        dockerfile = dockerfile.relative_to(context_dir)
+        print_logs(
+            docker.APIClient().build(
+                path=str(context_dir),
+                tag=tag,
+                dockerfile=str(dockerfile),
+                decode=True,
+                # pull=False,
+            )
         )
-    )
-    print("Docker image build complete.")
+        print("Docker image build complete.")
 
+    def push(self, repo, use_native_client=False):
+        print(f'Pushing docker image with tag "{repo}" {use_native_client=}...')
+        if self._client_id is None:
+            raise ValueError("ACR_CLIENT_ID environment variable is not set")
+        if self._client_secret is None:
+            raise ValueError("ACR_CLIENT_SECRET environment variable is not set")
 
-def push(repo, use_native_client=False):
-    print(f'Pushing docker image with tag "{repo}"...')
-    if use_native_client:
-        subprocess.run(
-            [
-                "docker",
-                "push",
-                repo,
-            ]
-        )
-    else:
+        if use_native_client:
+            subprocess.run(
+                [
+                    "docker",
+                    "push",
+                    repo,
+                ]
+            )
+            return
+
         print_logs(
             docker.APIClient().push(
                 repository=repo,
                 decode=True,
-                auth_config={"username": env.ACR_CLIENT_ID, "password": env.ACR_CLIENT_SECRET},
+                auth_config={"username": self._client_id, "password": self._client_secret},
                 stream=True,
             )
         )
-    print("Docker image push complete.")
+        print("Docker image push complete.")
 
 
 def colorize_text(color, text):
     cm = colors.get(color)
     return f"\033[{cm}m" + text + "\033[0m"
+
+
+class NoAuthenticationError(Exception):
+    pass
 
 
 def print_logs(build_logs, color="green"):
@@ -133,6 +145,8 @@ def print_logs(build_logs, color="green"):
             status = json_output.get("status", None)
             stream = json_output.get("stream", None)
             if stream is not None:
+                if "unauthorized: authentication required" in stream:
+                    raise NoAuthenticationError("unauthorized: authentication required")
                 print(colorize_text(color, stream.strip()))
             elif status is not None:
                 id_str = json_output.get("id", "")

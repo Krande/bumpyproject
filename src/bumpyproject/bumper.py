@@ -8,6 +8,14 @@ class BumpLevelSizeError(Exception):
     pass
 
 
+class OutdatedBumpError(Exception):
+    pass
+
+
+class NoVersionChangeError(Exception):
+    pass
+
+
 def version_to_tuple(version: str) -> tuple:
     ver = semver.VersionInfo.parse(version).to_tuple()
     output = []
@@ -31,25 +39,15 @@ def get_bump_delta(old_version: str, new_version: str) -> list[int, int, int, in
     return res
 
 
-def make_semver_compatible(version: str) -> str:
-    if env.RELEASE_TAG in version:
-        version = version.replace(env.RELEASE_TAG, f"-{env.RELEASE_TAG}")
-
-    elif "a" in version:
-        version = version.replace("a", "-alpha.")
-
-    return version
-
-
 def is_newer(old_version: str, new_version: str) -> bool:
-    if env.RELEASE_TAG in old_version:
+    if env.RELEASE_TAG in old_version and "-" not in old_version:
         old_version = old_version.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
 
     compare = semver.compare(old_version, new_version)
     if compare == 1:
-        raise ValueError(f"Next bump is outdated! {new_version=} < {old_version=}")
+        raise OutdatedBumpError(f"Next bump is outdated! {new_version=} < {old_version=}")
     elif compare == 0:
-        raise ValueError(f"No version change {new_version=} == {old_version=}")
+        raise NoVersionChangeError(f"No version change {new_version=} == {old_version=}")
 
     return True
 

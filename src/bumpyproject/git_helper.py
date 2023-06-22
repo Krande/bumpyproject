@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import pathlib
+from typing import TYPE_CHECKING
 
 import git
-import tomlkit
 
 from bumpyproject import env_vars as env
 from bumpyproject.log_utils import logger
-from bumpyproject.versions import BumpLevel
+
+if TYPE_CHECKING:
+    from bumpyproject.versions import BumpLevel
 
 
 class DirtyRepoError(Exception):
@@ -63,8 +67,8 @@ class GitHelper:
         config_reader = curr_repo.config_reader()
 
         # Check if user.name and user.email are set
-        user_name_is_set = config_reader.has_option('user', 'name')
-        user_email_is_set = config_reader.has_option('user', 'email')
+        user_name_is_set = config_reader.has_option("user", "name")
+        user_email_is_set = config_reader.has_option("user", "email")
         if not user_name_is_set:
             curr_repo.git.config("user.name", env.GIT_USER)
         if not user_email_is_set:
@@ -86,6 +90,8 @@ class GitHelper:
             curr_repo.git.push("--set-upstream", "origin", branch_name)
 
     def get_bump_level_from_commit(self) -> BumpLevel:
+        from bumpyproject.versions import BumpLevel
+
         commits = list(self.git_repo.iter_commits(max_count=1))
         latest_commit = commits[0]
         msg = latest_commit.message
