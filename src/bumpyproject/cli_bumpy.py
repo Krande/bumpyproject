@@ -39,9 +39,10 @@ def docker(
         use_native_client=False,
         pyproject_toml: Annotated[str, typer.Option(envvar="PYPROJECT_TOML")] = None,
         package_json: Annotated[str, typer.Option(envvar="PKG_JSON")] = None,
-
+        git_root_dir: Annotated[str, typer.Option(envvar="GIT_ROOT_DIR")] = None,
 ):
     proj = project.Project(
+        git_root_dir=git_root_dir,
         pyproject_toml=pyproject_toml,
         package_json=package_json,
         docker_context=context_dir,

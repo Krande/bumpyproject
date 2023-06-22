@@ -15,7 +15,7 @@ from bumpyproject.versions import make_semver_compatible
 
 
 class Project:
-    def __init__(self, root_dir=None, pyproject_toml=None, package_json=None, dockerfile=None, docker_context=None,
+    def __init__(self, git_root_dir=None, pyproject_toml=None, package_json=None, dockerfile=None, docker_context=None,
                  pypi_url=None, conda_url=None):
 
         if pyproject_toml is None:
@@ -33,7 +33,10 @@ class Project:
         if not pyproject_toml.exists():
             raise FileNotFoundError(f"Could not find {pyproject_toml}")
 
-        self._root_dir = root_dir
+        if git_root_dir is None:
+            git_root_dir = os.getcwd()
+
+        self._root_dir = git_root_dir
         self._pyproject_toml = pyproject_toml.resolve().absolute()
         self._package_json = package_json
         self._git_helper = GitHelper(self.root_dir)
