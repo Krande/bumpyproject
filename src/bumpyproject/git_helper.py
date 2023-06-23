@@ -35,6 +35,11 @@ class GitHelper:
         else:
             logger.warning("No git remote found. This may cause issues.")
 
+    @staticmethod
+    def from_git_url(git_url, git_root_dir, project=None):
+        git.Repo.clone_from(git_url, git_root_dir)
+        return GitHelper(git_root_dir, project)
+
     @property
     def repo_root_dir(self) -> pathlib.Path:
         return self._git_root_dir
@@ -66,6 +71,7 @@ class GitHelper:
         # Check if user.name and user.email are set
         user_name_is_set = config_reader.has_option("user", "name")
         user_email_is_set = config_reader.has_option("user", "email")
+
         if not user_name_is_set:
             curr_repo.git.config("user.name", env.GIT_USER)
         if not user_email_is_set:
@@ -100,3 +106,4 @@ class GitHelper:
             return BumpLevel.PRE_RELEASE
 
         raise ValueError(f'No bump level found in commit message "{msg}"')
+

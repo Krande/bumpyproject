@@ -1,6 +1,5 @@
 import requests
 
-from bumpyproject import env_vars as env
 from bumpyproject.versions import get_latest_version_from_list_of_versions_by_numeric_sorting
 
 

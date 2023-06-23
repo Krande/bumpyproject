@@ -1,6 +1,6 @@
 
 bump:
-	bumpy --bump-level=pre-release --git-push --check-git
+	bumpy pyproject --push
 
 dev:
 	mamba env update -f environment.yml --prune
