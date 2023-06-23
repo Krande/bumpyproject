@@ -173,11 +173,11 @@ class Project:
                 bumper.is_newer(pypi_version, new_version)
                 if self._ga_version_output:
                     set_github_actions_variable("PYPIBUMP", "TRUE")
-                logger.info(f"Latest version on PyPI '{pypi_version}' OK for push to '{new_version}'")
+                logger.info(f"{new_version=}' OK to succeed '{pypi_version=}' on PyPI")
             except (OutdatedBumpError, NoVersionChangeError) as e:
                 if self._ga_version_output:
                     set_github_actions_variable("PYPIBUMP", "FALSE")
-                    logger.info(f"Latest version on PyPI '{pypi_version}' NOT OK for push to '{new_version}'")
+                    logger.info(f"{new_version=}' NOT OK to succeed '{pypi_version=}' on PyPI")
                 else:
                     raise e
 
@@ -187,11 +187,11 @@ class Project:
                 bumper.is_newer(conda_version, new_version)
                 if self._ga_version_output:
                     set_github_actions_variable("CONDABUMP", "TRUE")
-                logger.info(f"Latest version on Conda '{conda_version}' OK for push to '{new_version}'")
+                logger.info(f"{new_version=}' OK to succeed '{conda_version=}' on Conda")
             except (OutdatedBumpError, NoVersionChangeError) as e:
                 if self._ga_version_output:
                     set_github_actions_variable("CONDABUMP", "FALSE")
-                    logger.info(f"Latest version on Conda '{conda_version}' NOT OK for push to '{new_version}'")
+                    logger.info(f"{new_version=}' NOT OK to succeed '{conda_version=}' on Conda")
                 else:
                     raise e
 
