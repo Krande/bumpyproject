@@ -16,4 +16,4 @@ def set_github_actions_variable(var_name, var_value):
         raise ValueError("GITHUB_OUTPUT environment variable not set")
 
     with open(env_file, "a") as my_file:
-        my_file.write(f"{var_name}={var_value}")
+        my_file.write(f"{var_name}={var_value}\n")
