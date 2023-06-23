@@ -12,17 +12,28 @@ from bumpyproject import py_distro
 from bumpyproject.git_helper import GitHelper
 from bumpyproject.helpers import find_file_in_subdirectories
 from bumpyproject.versions import make_semver_compatible
+from bumpyproject.log_utils import logger
 
 
 class Project:
-    def __init__(self, git_root_dir=None, pyproject_toml=None, package_json=None, dockerfile=None, docker_context=None,
-                 pypi_url=None, conda_url=None):
-
+    def __init__(
+        self,
+        git_root_dir=None,
+        pyproject_toml=None,
+        package_json=None,
+        dockerfile=None,
+        docker_context=None,
+        pypi_url=None,
+        conda_url=None,
+    ):
         if pyproject_toml is None:
             pyproject_toml = find_file_in_subdirectories(os.getcwd(), "pyproject.toml")
 
         if package_json is None:
-            package_json = find_file_in_subdirectories(os.getcwd(), "package.json")
+            try:
+                package_json = find_file_in_subdirectories(os.getcwd(), "package.json")
+            except FileNotFoundError:
+                package_json = "package.json"
 
         if isinstance(pyproject_toml, str):
             pyproject_toml = pathlib.Path(pyproject_toml)
@@ -136,11 +147,15 @@ class Project:
         version = make_semver_compatible(version)
         return version
 
-    def bump(self, bump_level, check_git=True, ignore_git_state=False, git_push=False):
+    def bump(self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False):
         git_helper = self.git
 
         current_version = self.get_pyproject_version()
-        new_version = bumper.bump_version(current_version, bump_level)
+
+        if check_current_version:
+            new_version = current_version
+        else:
+            new_version = bumper.bump_version(current_version, bump_level)
 
         if check_git:
             self.check_git_history(new_version)
@@ -158,7 +173,11 @@ class Project:
             acr_version = docker_helper.DockerACRHelper(env.ACR_NAME, env.ACR_REPO_NAME).get_latest_tagged_image()
             bumper.is_newer(acr_version, new_version)
 
-        # Before the image is pushed we do some checks
+        if check_current_version:
+            logger.info(f"Current version '{current_version}' is ready to be pushed.")
+            return
+
+            # Before the image is pushed we do some checks
         if not env.IGNORE_GIT_STATE:
             git_helper.check_git_state()
 

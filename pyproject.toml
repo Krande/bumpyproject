@@ -23,9 +23,7 @@ dependencies = [
 where = ["src"]
 
 [project.scripts]
-#bumpy = "bumpyproject.cli_main:main"
 bumpy = "bumpyproject.cli_bumpy:app"
-bumpy-docker = "bumpyproject.cli_docker:main"
 
 [project.urls]
 homepage = "https://github.com/Krande/bumpyproject"
