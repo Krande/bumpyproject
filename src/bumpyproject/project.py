@@ -202,7 +202,7 @@ class Project:
             logger.info(f"Latest version on ACR '{acr_version}' OK for push to '{new_version}'")
 
         if check_current_version:
-            logger.info(f"Current version '{current_version}' is ready to be pushed.")
+            logger.info(f"Check complete for {new_version}.")
             return new_version
 
             # Before the image is pushed we do some checks
