@@ -1,7 +1,7 @@
 import semver
 
 from bumpyproject import env_vars as env
-from bumpyproject.versions import BumpLevel
+from bumpyproject.versions import BumpLevel, make_semver_compatible
 
 
 class BumpLevelSizeError(Exception):
@@ -40,8 +40,7 @@ def get_bump_delta(old_version: str, new_version: str) -> list[int, int, int, in
 
 
 def is_newer(old_version: str, new_version: str) -> bool:
-    if env.RELEASE_TAG in old_version and "-" not in old_version:
-        old_version = old_version.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
+    old_version = make_semver_compatible(old_version)
 
     compare = semver.compare(old_version, new_version)
     if compare == 1:

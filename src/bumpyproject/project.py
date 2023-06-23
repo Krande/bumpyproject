@@ -9,7 +9,9 @@ from bumpyproject import bumper
 from bumpyproject import docker_helper
 from bumpyproject import env_vars as env
 from bumpyproject import py_distro
+from bumpyproject.bumper import NoVersionChangeError, OutdatedBumpError
 from bumpyproject.git_helper import GitHelper
+from bumpyproject.github_helper import set_github_actions_variable
 from bumpyproject.helpers import find_file_in_subdirectories
 from bumpyproject.versions import make_semver_compatible
 from bumpyproject.log_utils import logger
@@ -17,14 +19,15 @@ from bumpyproject.log_utils import logger
 
 class Project:
     def __init__(
-        self,
-        git_root_dir=None,
-        pyproject_toml=None,
-        package_json=None,
-        dockerfile=None,
-        docker_context=None,
-        pypi_url=None,
-        conda_url=None,
+            self,
+            git_root_dir=None,
+            pyproject_toml=None,
+            package_json=None,
+            dockerfile=None,
+            docker_context=None,
+            pypi_url=None,
+            conda_url=None,
+            ga_version_output=False,
     ):
         if pyproject_toml is None:
             pyproject_toml = find_file_in_subdirectories(os.getcwd(), "pyproject.toml")
@@ -55,6 +58,7 @@ class Project:
         self._docker_context = docker_context if docker_context is None else pathlib.Path(docker_context)
         self.pypi_url = pypi_url
         self.conda_url = conda_url
+        self._ga_version_output = ga_version_output
 
         if self._dockerfile is not None and not self._dockerfile.exists():
             if self._docker_context is not None:
@@ -148,7 +152,7 @@ class Project:
         return version
 
     def bump(
-        self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False
+            self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False
     ) -> str:
         git_helper = self.git
 
@@ -164,13 +168,31 @@ class Project:
 
         if self.pypi_url is not None:
             pypi_version = py_distro.get_latest_pypi_version(self.pypi_url)
-            bumper.is_newer(pypi_version, new_version)
-            logger.info(f"Latest version on PyPI '{pypi_version}' OK for push to '{new_version}'")
+            try:
+                bumper.is_newer(pypi_version, new_version)
+                if self._ga_version_output:
+                    set_github_actions_variable("PYPI_BUMP", "TRUE")
+                logger.info(f"Latest version on PyPI '{pypi_version}' OK for push to '{new_version}'")
+            except (OutdatedBumpError, NoVersionChangeError) as e:
+                if self._ga_version_output:
+                    set_github_actions_variable("PYPI_BUMP", "FALSE")
+                    logger.info(f"Latest version on PyPI '{pypi_version}' NOT OK for push to '{new_version}'")
+                else:
+                    raise e
 
         if self.conda_url is not None:
             conda_version = py_distro.get_latest_conda_version(self.conda_url)
-            bumper.is_newer(conda_version, new_version)
-            logger.info(f"Latest version on Conda '{conda_version}' OK for push to '{new_version}'")
+            try:
+                bumper.is_newer(conda_version, new_version)
+                if self._ga_version_output:
+                    set_github_actions_variable("CONDA_BUMP", "TRUE")
+                logger.info(f"Latest version on Conda '{conda_version}' OK for push to '{new_version}'")
+            except (OutdatedBumpError, NoVersionChangeError) as e:
+                if self._ga_version_output:
+                    set_github_actions_variable("CONDA_BUMP", "FALSE")
+                    logger.info(f"Latest version on Conda '{conda_version}' NOT OK for push to '{new_version}'")
+                else:
+                    raise e
 
         check_acr = env.ACR_NAME is not None and env.ACR_REPO_NAME is not None
         if check_acr:

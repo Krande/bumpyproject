@@ -24,8 +24,13 @@ def pyproject(
     ga_version_output: bool = False,
 ):
     proj = project.Project(
-        pyproject_toml=pyproject_toml, package_json=package_json, pypi_url=pypi_url, conda_url=conda_url
+        pyproject_toml=pyproject_toml,
+        package_json=package_json,
+        pypi_url=pypi_url,
+        conda_url=conda_url,
+        ga_version_output=ga_version_output,
     )
+
     new_version = proj.bump(bump_level, check_current_version=check_current)
 
     if ga_version_output:
