@@ -147,7 +147,9 @@ class Project:
         version = make_semver_compatible(version)
         return version
 
-    def bump(self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False) -> str:
+    def bump(
+        self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False
+    ) -> str:
         git_helper = self.git
 
         current_version = self.get_pyproject_version()
@@ -161,17 +163,20 @@ class Project:
             self.check_git_history(new_version)
 
         if self.pypi_url is not None:
-            pypi_version = py_distro.get_latest_pypi_version()
+            pypi_version = py_distro.get_latest_pypi_version(self.pypi_url)
             bumper.is_newer(pypi_version, new_version)
+            logger.info(f"Latest version on PyPI '{pypi_version}' OK for push to '{new_version}'")
 
         if self.conda_url is not None:
-            conda_version = py_distro.get_latest_conda_version()
+            conda_version = py_distro.get_latest_conda_version(self.conda_url)
             bumper.is_newer(conda_version, new_version)
+            logger.info(f"Latest version on Conda '{conda_version}' OK for push to '{new_version}'")
 
         check_acr = env.ACR_NAME is not None and env.ACR_REPO_NAME is not None
         if check_acr:
             acr_version = docker_helper.DockerACRHelper(env.ACR_NAME, env.ACR_REPO_NAME).get_latest_tagged_image()
             bumper.is_newer(acr_version, new_version)
+            logger.info(f"Latest version on ACR '{acr_version}' OK for push to '{new_version}'")
 
         if check_current_version:
             logger.info(f"Current version '{current_version}' is ready to be pushed.")
