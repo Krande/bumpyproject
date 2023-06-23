@@ -48,8 +48,3 @@ ACR_CLIENT_ID = os.getenv("AZ_ACR_SERVICE_PRINCIPAL_USERNAME")
 ACR_CLIENT_SECRET = os.getenv("AZ_ACR_SERVICE_PRINCIPAL_PASSWORD")
 ACR_NAME = os.getenv("AZ_ACR_NAME")
 ACR_REPO_NAME = os.getenv("AZ_ACR_REPO_NAME")
-
-# "https://pypi.org/pypi/<packagename>/json"
-PYPI_URL = os.getenv("PYPI_URL")
-# "https://api.anaconda.org/package/<username/organization>/<packagename>"
-CONDA_URL = os.getenv("CONDA_URL")

@@ -15,13 +15,13 @@ app = typer.Typer()
 
 @app.command()
 def pyproject(
-    bump_level: BumpLevel = BumpLevel.PRE_RELEASE,
-    pyproject_toml: Annotated[str, typer.Option(envvar="PYPROJECT_TOML")] = None,
-    package_json: Annotated[str, typer.Option(envvar="PACKAGE_JSON")] = None,
-    pypi_url: Annotated[str, typer.Option(envvar="PYPI_URL")] = None,
-    conda_url: Annotated[str, typer.Option(envvar="CONDA_URL")] = None,
-    check_current: bool = False,
-    ga_version_output: bool = False,
+        bump_level: BumpLevel = BumpLevel.PRE_RELEASE,
+        pyproject_toml: str = typer.Option(None, envvar="PYPROJECT_TOML"),
+        package_json: str = typer.Option(None, envvar="PACKAGE_JSON"),
+        pypi_url: str = typer.Option(None, envvar="PYPI_URL"),
+        conda_url: str = typer.Option(None, envvar="CONDA_URL"),
+        check_current: bool = False,
+        ga_version_output: bool = False,
 ):
     proj = project.Project(
         pyproject_toml=pyproject_toml,
@@ -39,19 +39,19 @@ def pyproject(
 
 @app.command()
 def docker(
-    context_dir: Annotated[str, typer.Option()],
-    dockerfile: Annotated[str, typer.Option()],
-    acr_repo_name: Annotated[str, typer.Option(envvar="AZ_ACR_REPO_NAME")],
-    acr_name: Annotated[str, typer.Option(envvar="AZ_ACR_NAME")],
-    tenant_id: Annotated[str, typer.Option(envvar="AZ_TENANT_ID")],
-    client_id: Annotated[str, typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_USERNAME")],
-    client_secret: Annotated[str, typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_PASSWORD")],
-    build: bool = False,
-    push: bool = False,
-    use_native_client=False,
-    pyproject_toml: Annotated[str, typer.Option(envvar="PYPROJECT_TOML")] = None,
-    package_json: Annotated[str, typer.Option(envvar="PKG_JSON")] = None,
-    git_root_dir: Annotated[str, typer.Option(envvar="GIT_ROOT_DIR")] = None,
+        context_dir: Annotated[str, typer.Option()],
+        dockerfile: Annotated[str, typer.Option()],
+        acr_repo_name: str = typer.Option(envvar="AZ_ACR_REPO_NAME"),
+        acr_name: str = typer.Option(envvar="AZ_ACR_NAME"),
+        tenant_id: str = typer.Option(envvar="AZ_TENANT_ID"),
+        client_id: str = typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_USERNAME"),
+        client_secret: str = typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_PASSWORD"),
+        build: bool = False,
+        push: bool = False,
+        use_native_client=False,
+        pyproject_toml: str = typer.Option(None, envvar="PYPROJECT_TOML"),
+        package_json: str = typer.Option(None, envvar="PACKAGE_JSON"),
+        git_root_dir: str = typer.Option(None, envvar="GIT_ROOT_DIR"),
 ):
     proj = project.Project(
         git_root_dir=git_root_dir,
