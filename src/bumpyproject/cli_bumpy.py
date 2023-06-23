@@ -22,6 +22,7 @@ def pyproject(
         conda_url: str = typer.Option(None, envvar="CONDA_URL"),
         check_current: bool = False,
         ga_version_output: bool = False,
+        push: bool = False,
 ):
     proj = project.Project(
         pyproject_toml=pyproject_toml,
@@ -35,6 +36,9 @@ def pyproject(
 
     if ga_version_output:
         set_github_actions_variable("VERSION", new_version)
+
+    if push:
+        proj.git.push()
 
 
 @app.command()
@@ -54,7 +58,7 @@ def docker(
         git_root_dir: str = typer.Option(None, envvar="GIT_ROOT_DIR"),
 ):
     proj = project.Project(
-        git_root_dir=git_root_dir,
+        root_dir=git_root_dir,
         pyproject_toml=pyproject_toml,
         package_json=package_json,
         docker_context=context_dir,

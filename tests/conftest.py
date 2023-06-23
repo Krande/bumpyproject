@@ -20,8 +20,8 @@ def mock_proj_a():
         # Create a temporary directory for the local repository
         with tempfile.TemporaryDirectory() as local_temp_dir:
             copy_tree(str(MOCK_PROJ_A_DIR), local_temp_dir)
-            env.PYPROJECT_TOML = str((pathlib.Path(local_temp_dir) / "pyproject.toml").resolve().absolute())
-            env.GIT_ROOT_DIR = pathlib.Path(local_temp_dir)
+            os.environ['PYPROJECT_TOML'] = str((pathlib.Path(local_temp_dir) / "pyproject.toml").resolve().absolute())
+            os.environ['GIT_ROOT_DIR'] = local_temp_dir
 
             # Initialize a new Git repository in the temporary directory
             local_repo = git.Repo.init(local_temp_dir)

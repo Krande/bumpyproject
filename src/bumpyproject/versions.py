@@ -42,3 +42,12 @@ def make_semver_compatible(version: str) -> str:
         version = version.replace("a", "-alpha.")
 
     return version
+
+
+def make_pep440_compatible(version: str) -> str:
+    """Because PEP 440 does not allow hyphens in version numbers, we need to remove them.
+    https://peps.python.org/pep-0440/#public-version-identifiers"""
+    if "-" in version:
+        version = version.replace("-", "")
+
+    return version

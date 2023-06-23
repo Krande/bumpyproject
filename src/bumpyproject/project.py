@@ -13,14 +13,14 @@ from bumpyproject.bumper import NoVersionChangeError, OutdatedBumpError
 from bumpyproject.git_helper import GitHelper
 from bumpyproject.github_helper import set_github_actions_variable
 from bumpyproject.helpers import find_file_in_subdirectories
-from bumpyproject.versions import make_semver_compatible
+from bumpyproject.versions import make_semver_compatible, make_pep440_compatible
 from bumpyproject.log_utils import logger
 
 
 class Project:
     def __init__(
             self,
-            git_root_dir=None,
+            root_dir=None,
             pyproject_toml=None,
             package_json=None,
             dockerfile=None,
@@ -29,12 +29,15 @@ class Project:
             conda_url=None,
             ga_version_output=False,
     ):
+        if root_dir is None:
+            root_dir = os.getcwd()
+
         if pyproject_toml is None:
-            pyproject_toml = find_file_in_subdirectories(os.getcwd(), "pyproject.toml")
+            pyproject_toml = find_file_in_subdirectories(root_dir, "pyproject.toml")
 
         if package_json is None:
             try:
-                package_json = find_file_in_subdirectories(os.getcwd(), "package.json")
+                package_json = find_file_in_subdirectories(root_dir, "package.json")
             except FileNotFoundError:
                 package_json = "package.json"
 
@@ -47,10 +50,7 @@ class Project:
         if not pyproject_toml.exists():
             raise FileNotFoundError(f"Could not find {pyproject_toml}")
 
-        if git_root_dir is None:
-            git_root_dir = os.getcwd()
-
-        self._root_dir = git_root_dir
+        self._root_dir = root_dir
         self._pyproject_toml = pyproject_toml.resolve().absolute()
         self._package_json = package_json
         self._git_helper = GitHelper(self.root_dir)
@@ -205,7 +205,7 @@ class Project:
             return new_version
 
             # Before the image is pushed we do some checks
-        if not env.IGNORE_GIT_STATE:
+        if not ignore_git_state:
             git_helper.check_git_state()
 
         # If exists bump package.json file
@@ -221,7 +221,7 @@ class Project:
             git_helper.commit_and_tag(current_version, new_version)
 
         # Push the new version to git
-        if not ignore_git_state and git_push:
+        if git_push:
             git_helper.push()
 
         return new_version
@@ -241,9 +241,8 @@ def bump_pyproject(pyproject_toml_path: str | pathlib.Path, new_version: str) ->
         toml_data = tomlkit.load(fp)
 
     old_version = toml_data["project"]["version"]
-    if env.RELEASE_TAG in old_version:
-        old_version = old_version.replace(env.RELEASE_TAG, "-" + env.RELEASE_TAG)
 
+    old_version = make_semver_compatible(old_version)
     compare = semver.Version.compare(semver.Version.parse(old_version), semver.Version.parse(new_version))
     if compare == 1:
         raise ValueError(f"New version {new_version} is less than old version {old_version}")
@@ -251,10 +250,7 @@ def bump_pyproject(pyproject_toml_path: str | pathlib.Path, new_version: str) ->
         print("No version change")
         return False
 
-    # Because PEP 440 does not allow hyphens in version numbers, we need to remove them
-    if "-" in new_version:
-        new_version = new_version.replace("-", "")
-
+    new_version = make_pep440_compatible(new_version)
     toml_data["project"]["version"] = new_version
     with open(pyproject_toml_path, "w") as f:
         f.write(tomlkit.dumps(toml_data))
