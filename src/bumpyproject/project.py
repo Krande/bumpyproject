@@ -152,7 +152,8 @@ class Project:
         return version
 
     def bump(
-            self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False
+            self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False,
+            dry_run=False
     ) -> str:
         git_helper = self.git
 
@@ -207,6 +208,10 @@ class Project:
             # Before the image is pushed we do some checks
         if not ignore_git_state:
             git_helper.check_git_state()
+
+        if dry_run:
+            logger.info(f"Dry run: Version '{new_version}' would be pushed.")
+            return new_version
 
         # If exists bump package.json file
         is_pkg_json_bumped = True

@@ -23,6 +23,7 @@ def pyproject(
         check_current: bool = False,
         ga_version_output: bool = False,
         push: bool = False,
+        dry_run: bool = False,
 ):
     proj = project.Project(
         pyproject_toml=pyproject_toml,
