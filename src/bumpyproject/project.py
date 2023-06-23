@@ -147,7 +147,7 @@ class Project:
         version = make_semver_compatible(version)
         return version
 
-    def bump(self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False):
+    def bump(self, bump_level, check_git=True, ignore_git_state=False, git_push=False, check_current_version=False) -> str:
         git_helper = self.git
 
         current_version = self.get_pyproject_version()
@@ -175,7 +175,7 @@ class Project:
 
         if check_current_version:
             logger.info(f"Current version '{current_version}' is ready to be pushed.")
-            return
+            return new_version
 
             # Before the image is pushed we do some checks
         if not env.IGNORE_GIT_STATE:
@@ -196,6 +196,8 @@ class Project:
         # Push the new version to git
         if not ignore_git_state and git_push:
             git_helper.push()
+
+        return new_version
 
     def get_pyproject_version(self) -> str:
         with open(self.pyproject_toml_path, mode="r") as fp:

@@ -7,6 +7,7 @@ from bumpyproject import project
 from bumpyproject.bumper import BumpLevel
 from bumpyproject.docker_helper import DockerACRHelper
 from bumpyproject.log_utils import logger
+from bumpyproject.github_helper import set_github_actions_variable
 
 logger.setLevel("INFO")
 app = typer.Typer()
@@ -20,11 +21,15 @@ def pyproject(
     pypi_url: Annotated[str, typer.Option(envvar="PYPI_URL")] = None,
     conda_url: Annotated[str, typer.Option(envvar="CONDA_URL")] = None,
     check_current: bool = False,
+    ga_version_output: bool = False,
 ):
     proj = project.Project(
         pyproject_toml=pyproject_toml, package_json=package_json, pypi_url=pypi_url, conda_url=conda_url
     )
-    proj.bump(bump_level, check_current_version=check_current)
+    new_version = proj.bump(bump_level, check_current_version=check_current)
+
+    if ga_version_output:
+        set_github_actions_variable("VERSION", new_version)
 
 
 @app.command()
