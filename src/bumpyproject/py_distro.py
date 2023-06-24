@@ -1,30 +1,26 @@
 import requests
-from bumpyproject import env_vars as env
+
+from bumpyproject.versions import get_latest_version_from_list_of_versions_by_numeric_sorting
 
 
-class PypiHelper:
-    @staticmethod
-    def get_latest_pypi_version() -> str:
-        # Make a GET request to the URL
-        response = requests.get(env.PYPI_URL)
-        data = response.json()
-        latest_pypi_version = data["info"]["version"]
+def get_latest_pypi_version(pypi_url) -> str:
+    """URL to the JSON API of the PyPI package. For example: https://pypi.org/pypi/ada-py/json"""
+    # Make a GET request to the URL
+    response = requests.get(pypi_url)
+    data = response.json()
 
-        if "a" in latest_pypi_version:
-            latest_pypi_version = latest_pypi_version.replace("a", "-alpha.")
+    latest_version = get_latest_version_from_list_of_versions_by_numeric_sorting(list(data["releases"].keys()))
 
-        return latest_pypi_version
+    return latest_version
 
 
-class CondaHelper:
-    @staticmethod
-    def get_latest_conda_version() -> str:
-        # Make a GET request to the URL
-        response = requests.get(env.CONDA_URL)
-        data = response.json()
+def get_latest_conda_version(conda_url) -> str:
+    """URL to the JSON API of the Conda package. For example: https://api.anaconda.org/package/krande/ada-py"""
+    # Make a GET request to the URL
+    response = requests.get(conda_url)
+    data = response.json()
 
-        latest_conda_version = data["files"][-1]["version"]
-        if env.RELEASE_TAG in latest_conda_version:
-            latest_conda_version = latest_conda_version.replace(env.RELEASE_TAG, f"-{env.RELEASE_TAG}")
+    versions = [file["version"] for file in data["files"]]
+    latest_conda_version = get_latest_version_from_list_of_versions_by_numeric_sorting(versions)
 
-        return latest_conda_version
+    return latest_conda_version

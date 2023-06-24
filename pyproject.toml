@@ -16,14 +16,14 @@ dependencies = [
     "docker",
     "GitPython",
     "python-dotenv",
+    "typer[all]"
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [project.scripts]
-bumpy = "bumpyproject.cli_main:main"
-bumpy-docker = "bumpyproject.cli_docker:main"
+bumpy = "bumpyproject.cli_bumpy:app"
 
 [project.urls]
 homepage = "https://github.com/Krande/bumpyproject"

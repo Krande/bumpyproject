@@ -1,0 +1,4 @@
+my_project:
+    a_yaml_with_some_text:
+        some_text: "This is some text"
+    a_version_number: 1.0.0
