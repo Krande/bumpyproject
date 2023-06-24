@@ -1,7 +1,4 @@
-import tempfile
-
 from bumpyproject.cli_bumpy import git_file_editor
-from bumpyproject.git_helper import GitHelper
 
 
 def test_repo_file_subs(mock_proj_a):
