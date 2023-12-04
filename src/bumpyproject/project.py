@@ -19,15 +19,15 @@ from bumpyproject.log_utils import logger
 
 class Project:
     def __init__(
-        self,
-        root_dir=None,
-        pyproject_toml=None,
-        package_json=None,
-        dockerfile=None,
-        docker_context=None,
-        pypi_url=None,
-        conda_url=None,
-        ga_version_output=False,
+            self,
+            root_dir=None,
+            pyproject_toml=None,
+            package_json=None,
+            dockerfile=None,
+            docker_context=None,
+            pypi_url=None,
+            conda_url=None,
+            ga_version_output=False,
     ):
         if root_dir is None:
             root_dir = os.getcwd()
@@ -152,13 +152,13 @@ class Project:
         return version
 
     def bump(
-        self,
-        bump_level,
-        check_git=True,
-        ignore_git_state=False,
-        git_push=False,
-        check_current_version=False,
-        dry_run=False,
+            self,
+            bump_level,
+            check_git=True,
+            ignore_git_state=False,
+            git_push=False,
+            check_current_version=False,
+            dry_run=False,
     ) -> str:
         git_helper = self.git
 
@@ -244,6 +244,12 @@ class Project:
         old_version = make_semver_compatible(old_version)
 
         return old_version
+
+    def get_pyproject_name(self) -> str:
+        with open(self.pyproject_toml_path, mode="r") as fp:
+            toml_data = tomlkit.load(fp)
+
+        return toml_data["project"]["name"]
 
 
 def bump_pyproject(pyproject_toml_path: str | pathlib.Path, new_version: str) -> bool:

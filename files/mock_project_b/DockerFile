@@ -1,0 +1,3 @@
+# smallest possible image for use in unittesting of dockerfile
+FROM scratch
+CMD ["/bin/true"]

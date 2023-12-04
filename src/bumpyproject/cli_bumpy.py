@@ -53,17 +53,19 @@ def pyproject(
 def docker(
     context_dir: Annotated[str, typer.Option()],
     dockerfile: Annotated[str, typer.Option()],
-    acr_repo_name: str = typer.Option(envvar="AZ_ACR_REPO_NAME"),
-    acr_name: str = typer.Option(envvar="AZ_ACR_NAME"),
-    tenant_id: str = typer.Option(envvar="AZ_TENANT_ID"),
-    client_id: str = typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_USERNAME"),
-    client_secret: str = typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_PASSWORD"),
+    acr_repo_name: str = typer.Option(envvar="AZ_ACR_REPO_NAME", default=None),
+    acr_name: str = typer.Option(envvar="AZ_ACR_NAME", default=None),
+    tenant_id: str = typer.Option(envvar="AZ_TENANT_ID", default=None),
+    client_id: str = typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_USERNAME", default=None),
+    client_secret: str = typer.Option(envvar="AZ_ACR_SERVICE_PRINCIPAL_PASSWORD", default=None),
     build: bool = False,
     push: bool = False,
     use_native_client=False,
     pyproject_toml: str = _pyproject_toml,
     package_json: str = _package_json,
     git_root_dir: str = typer.Option(None, envvar="GIT_ROOT_DIR"),
+    no_acr: bool = False,
+    tag_override: str = None,
 ):
     proj = project.Project(
         root_dir=git_root_dir,
@@ -72,6 +74,15 @@ def docker(
         docker_context=context_dir,
         dockerfile=dockerfile,
     )
+    if build and no_acr:
+        name = proj.get_pyproject_name()
+        version = proj.get_pyproject_version()
+        tag = f"{name}:{version}"
+        if tag_override:
+            tag = tag_override
+        DockerACRHelper.build(proj.docker_context, proj.dockerfile, tag)
+        return None
+
     docker_helper = DockerACRHelper(acr_name, acr_repo_name, tenant_id, client_id, client_secret)
     docker_helper.bump_acr_docker_image(proj, build, push, use_native_client)
 

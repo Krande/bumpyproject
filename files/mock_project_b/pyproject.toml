@@ -1,0 +1,38 @@
+[project]
+name = "mock_proj_b"
+version = "0.0.1"
+description = "A simple utility for bumping version numbers in Python projects."
+authors = [
+  { name = "Kristoffer H. Andersen", email = "kristoffer_andersen@outlook.com" }
+]
+readme = "README.md"
+
+dependencies = [
+    "semver",
+    "tomlkit",
+    "azure-identity",
+    "azure-mgmt-containerregistry",
+    "azure-containerregistry",
+    "docker",
+    "GitPython",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+bumpy = "bumpyproject.cli_main:main"
+bumpy-docker = "bumpyproject.cli_docker:main"
+
+[project.urls]
+homepage = "https://github.com/Krande/bumpyproject"
+issues = "https://github.com/Krande/bumpyproject/issues"
+
+[tool.black]
+line-length = 120
+
+[tool.ruff]
+line-length = 120
+
+[tool.isort]
+profile = "black"
